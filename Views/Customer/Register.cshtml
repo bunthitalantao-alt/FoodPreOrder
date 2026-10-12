@@ -1,0 +1,81 @@
+﻿@model FoodPreOrder.Models.ViewModels.CustomerRegisterViewModel
+@{
+    Layout = "_LayoutCustomer";
+    ViewData["Title"] = "สมัครสมาชิก - ลูกค้า";
+}
+
+<div class="max-w-xl mx-auto my-8 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl">
+    
+    <!-- Header Modal Style (Page 2) -->
+    <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+        <div class="flex items-center gap-2">
+            <span class="px-2.5 py-1 bg-ocean-100 text-ocean-700 font-bold text-xs rounded-lg flex items-center gap-1.5">
+                <i class="fa-solid fa-user"></i> ลูกค้า
+            </span>
+            <h2 class="text-xl font-extrabold text-slate-800">สมัครสมาชิก (Register)</h2>
+        </div>
+        <a asp-action="Login" class="text-xs text-ocean-600 font-semibold hover:underline">
+            มีบัญชีแล้ว? เข้าสู่ระบบ
+        </a>
+    </div>
+
+    <!-- Account Type Selection (Page 2: Only Customer allowed, Operator option removed per Red X) -->
+    <div class="mb-5">
+        <label class="block text-xs font-medium text-slate-700 mb-2">เลือกประเภทบัญชีผู้ใช้:</label>
+        <div class="grid grid-cols-1 gap-3">
+            <div class="border-2 border-ocean-600 bg-ocean-50 p-4 rounded-2xl text-center">
+                <i class="fa-solid fa-user-tag text-3xl text-ocean-600 mb-1"></i>
+                <div class="font-bold text-sm text-ocean-900">ลูกค้าทั่วไป</div>
+                <div class="text-xs text-slate-500">สำหรับสั่งอาหารล่วงหน้า</div>
+            </div>
+        </div>
+    </div>
+
+    <form asp-action="Register" method="post" class="space-y-4">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-rose-600 text-xs bg-rose-50 p-3 rounded-xl"></div>
+
+        <div>
+            <label asp-for="FullName" class="block text-xs font-medium text-slate-700 mb-1">ชื่อ - นามสกุล *</label>
+            <input asp-for="FullName" placeholder="สมชาย ใจดี" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500 focus:outline-none" />
+            <span asp-validation-for="FullName" class="text-rose-500 text-xs"></span>
+        </div>
+
+        <div>
+            <label asp-for="PhoneNumber" class="block text-xs font-medium text-slate-700 mb-1">เบอร์โทรศัพท์ติดต่อ *</label>
+            <input asp-for="PhoneNumber" placeholder="081-234-5678" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500 focus:outline-none" />
+            <span asp-validation-for="PhoneNumber" class="text-rose-500 text-xs"></span>
+        </div>
+
+        <!-- Note handwritten on Page 2: "ลบเลข 9 ออก" -> clean label "อีเมลสำหรับเข้าสู่ระบบ *" -->
+        <div>
+            <label asp-for="Email" class="block text-xs font-medium text-slate-700 mb-1">อีเมลสำหรับเข้าสู่ระบบ *</label>
+            <input asp-for="Email" placeholder="user@domain.com" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500 focus:outline-none" />
+            <span asp-validation-for="Email" class="text-rose-500 text-xs"></span>
+        </div>
+
+        <div>
+            <label asp-for="Password" class="block text-xs font-medium text-slate-700 mb-1">รหัสผ่าน *</label>
+            <input asp-for="Password" placeholder="••••••••" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500 focus:outline-none" />
+            <span asp-validation-for="Password" class="text-rose-500 text-xs"></span>
+        </div>
+
+        <div>
+            <label asp-for="ConfirmPassword" class="block text-xs font-medium text-slate-700 mb-1">ยืนยันรหัสผ่าน *</label>
+            <input asp-for="ConfirmPassword" placeholder="••••••••" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500 focus:outline-none" />
+            <span asp-validation-for="ConfirmPassword" class="text-rose-500 text-xs"></span>
+        </div>
+
+        <button type="submit" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm shadow-md transition-all flex items-center justify-center gap-2 mt-2">
+            <i class="fa-solid fa-check"></i> ยืนยันลงทะเบียนสมัครสมาชิก
+        </button>
+    </form>
+
+    <div class="mt-4 text-center">
+        <a asp-action="Login" class="text-xs text-slate-500 hover:underline">ย้อนกลับไปหน้าเข้าสู่ระบบ</a>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

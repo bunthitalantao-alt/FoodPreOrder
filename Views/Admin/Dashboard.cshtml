@@ -1,0 +1,154 @@
+﻿@model FoodPreOrder.Models.ViewModels.AdminDashboardViewModel
+@{
+    Layout = "_LayoutAdmin";
+    ViewData["Title"] = "แผงควบคุมระบบภาพรวม";
+}
+
+<div class="space-y-8">
+    <!-- Header Banner (Page 6) -->
+    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <span class="px-2.5 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-md">ผู้ดูแลระบบ / System Admin</span>
+        <h2 class="text-2xl font-bold text-slate-800 mt-1">แผงควบคุมระบบภาพรวม FoodPreOrder</h2>
+        <p class="text-sm text-slate-500">ตรวจสอบสถิติแพลตฟอร์ม และอนุมัติคำขอสมัครร้านค้าใหม่</p>
+    </div>
+
+    <!-- System Stats Grid (Page 6) -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-xs text-slate-500 font-medium">ยอดขายรวมทั้งระบบ (GMV)</p>
+            <h3 class="text-2xl font-extrabold text-ocean-600 mt-1">฿@Model.TotalGMV.ToString("N0")</h3>
+            <p class="text-[11px] text-emerald-600 mt-1 flex items-center gap-1">
+                <i class="fa-solid fa-arrow-trend-up"></i> +12% จากสัปดาห์ก่อน
+            </p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-xs text-slate-500 font-medium">ร้านค้าที่ลงทะเบียนแล้ว</p>
+            <h3 class="text-2xl font-extrabold text-slate-800 mt-1">@Model.RegisteredMerchantsCount ร้าน</h3>
+            <p class="text-[11px] text-slate-500 mt-1">
+                รอการตรวจสอบ @Model.Applications.Count(a => a.Status == FoodPreOrder.Models.Domain.MerchantApplicationStatus.Pending) รายการ
+            </p>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <p class="text-xs text-slate-500 font-medium">ผู้ใช้งานฝั่งลูกค้า</p>
+            <h3 class="text-2xl font-extrabold text-slate-800 mt-1">@Model.CustomerUsersCount คน</h3>
+            <p class="text-[11px] text-emerald-600 mt-1 flex items-center gap-1">
+                <i class="fa-solid fa-user-plus"></i> +18 คนในสัปดาห์นี้
+            </p>
+        </div>
+    </div>
+
+    <!-- Admin Chart Analytics (Page 6: GMV Growth Bar Chart) -->
+    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+        <h3 class="font-bold text-slate-800 mb-4 text-sm flex items-center gap-2">
+            <i class="fa-solid fa-chart-area text-purple-700"></i> อัตราการเติบโตยอดขายรวมแพลตฟอร์ม (รายเดือน)
+        </h3>
+        <div class="h-64 relative">
+            <canvas id="adminGmvChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Merchant Applications Review Table (Page 6) -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+            <div>
+                <h3 class="font-bold text-slate-800">รายการคำขอลงทะเบียนผู้ประกอบการใหม่</h3>
+                <p class="text-xs text-slate-500">ตรวจสอบรายละเอียดข้อมูลธุรกิจและบัญชีธนาคาร</p>
+            </div>
+            <span class="text-xs px-2.5 py-1 bg-slate-100 rounded-lg text-slate-600 font-medium">
+                ทั้งหมด @Model.Applications.Count รายการ
+            </span>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-600">
+                <thead class="bg-slate-50 text-xs text-slate-500 uppercase tracking-wider">
+                    <tr>
+                        <th class="p-4">ชื่อร้านค้า / เจ้าของ</th>
+                        <th class="p-4">หมวดหมู่</th>
+                        <th class="p-4">เบอร์โทร / อีเมล</th>
+                        <th class="p-4">จุดนัดรับ / เวลาเปิด-ปิด</th>
+                        <th class="p-4">เลขภาษี / บัญชีธนาคาร</th>
+                        <th class="p-4">สถานะ</th>
+                        <th class="p-4 text-center">การอนุมัติ</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @foreach (var app in Model.Applications)
+                    {
+                        <tr class="hover:bg-slate-50 text-xs">
+                            <td class="p-4">
+                                <div class="font-bold text-slate-800">@app.ShopName</div>
+                                <div class="text-[11px] text-slate-400">เจ้าของ: @app.OwnerName</div>
+                            </td>
+                            <td class="p-4">
+                                <span class="px-2 py-0.5 bg-slate-100 rounded font-semibold text-slate-600">@app.Category</span>
+                            </td>
+                            <td class="p-4">
+                                <div>@app.Phone</div>
+                                <div class="text-[10px] text-slate-400">@app.Email</div>
+                            </td>
+                            <td class="p-4">
+                                <div>@app.Location</div>
+                                <div class="text-[10px] text-ocean-600 font-semibold">@app.OperatingHours</div>
+                            </td>
+                            <td class="p-4">
+                                <div class="font-mono text-[11px]">@app.TaxId</div>
+                                <div class="text-[10px] text-slate-500">@app.BankAccount</div>
+                            </td>
+                            <td class="p-4">
+                                @if (app.Status == FoodPreOrder.Models.Domain.MerchantApplicationStatus.Approved)
+                                {
+                                    <span class="px-2.5 py-1 rounded font-bold text-[10px] bg-emerald-100 text-emerald-700">อนุมัติแล้ว</span>
+                                }
+                                else
+                                {
+                                    <span class="px-2.5 py-1 rounded font-bold text-[10px] bg-amber-100 text-amber-700">รอตรวจสอบ</span>
+                                }
+                            </td>
+                            <td class="p-4 text-center">
+                                @if (app.Status == FoodPreOrder.Models.Domain.MerchantApplicationStatus.Pending)
+                                {
+                                    <form asp-action="ApproveMerchant" method="post" class="inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@app.Id" />
+                                        <button type="submit" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[11px] shadow-sm transition-all">
+                                            อนุมัติร้านค้า
+                                        </button>
+                                    </form>
+                                }
+                                else
+                                {
+                                    <span class="text-slate-400 font-medium">
+                                        <i class="fa-solid fa-check-double text-emerald-500"></i> เรียบร้อย
+                                    </span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const ctx = document.getElementById('adminGmvChart')?.getContext('2d');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.'],
+                        datasets: [{
+                            label: 'GMV ยอดขายรวม (บาท)',
+                            data: [12000, 19000, 28000, 35000, 42000, 58000],
+                            backgroundColor: '#2563eb',
+                            borderRadius: 8
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+        });
+    </script>
+}

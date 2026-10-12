@@ -1,0 +1,108 @@
+﻿@model List<FoodPreOrder.Models.Domain.PreOrder>
+@{
+    Layout = "_LayoutCustomer";
+    ViewData["Title"] = "ติดตามคำสั่งซื้อล่วงหน้า";
+    var highlightedId = ViewBag.HighlightedOrderId as string;
+}
+
+<div class="space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h2 class="text-2xl font-bold text-slate-800">ติดตามคำสั่งซื้อล่วงหน้า</h2>
+            <p class="text-sm text-slate-500">ตรวจสอบสถานะและจุดนัดรับอาหารหน้าร้าน (ชำระเงินสดเมื่อรับสินค้า)</p>
+        </div>
+        <a asp-action="Tracking" class="px-3.5 py-2 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-all">
+            <i class="fa-solid fa-rotate-right"></i> รีเฟรชสถานะ
+        </a>
+    </div>
+
+    @if (Model == null || Model.Count == 0)
+    {
+        <div class="bg-white p-12 rounded-3xl border border-slate-200 text-center">
+            <i class="fa-solid fa-clock-rotate-left text-4xl text-slate-300 mb-3"></i>
+            <h3 class="text-base font-bold text-slate-700">ยังไม่มีประวัติการสั่งอาหาร</h3>
+            <p class="text-xs text-slate-400 mt-1">เลือกสั่งอาหารล่วงหน้าจากร้านโปรดเพื่อรับอาหารตามเวลาที่ต้องการ</p>
+            <a asp-action="Index" class="inline-block mt-4 px-4 py-2 bg-ocean-600 text-white text-xs font-bold rounded-xl hover:bg-ocean-700">
+                สั่งอาหารตอนนี้
+            </a>
+        </div>
+    }
+    else
+    {
+        <div class="space-y-6">
+            @foreach (var order in Model)
+            {
+                var isHighlighted = highlightedId == order.Id;
+                var steps = new[]
+                {
+                    new { Status = FoodPreOrder.Models.Domain.OrderStatus.PENDING, Title = "รอร้านค้ารับออเดอร์", Icon = "fa-receipt" },
+                    new { Status = FoodPreOrder.Models.Domain.OrderStatus.COOKING, Title = "กำลังปรุงอาหาร", Icon = "fa-fire-burner" },
+                    new { Status = FoodPreOrder.Models.Domain.OrderStatus.READY, Title = "พร้อมรับอาหารหน้าร้าน", Icon = "fa-bag-shopping" },
+                    new { Status = FoodPreOrder.Models.Domain.OrderStatus.COMPLETED, Title = "รับสินค้าเรียบร้อย", Icon = "fa-circle-check" }
+                };
+
+                int currentStepIdx = (int)order.Status;
+
+                <div class="bg-white rounded-3xl border @(isHighlighted ? "border-ocean-500 ring-2 ring-ocean-200" : "border-slate-200") shadow-sm p-6 space-y-6">
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-slate-100 pb-4">
+                        <div>
+                            <span class="px-2.5 py-1 bg-ocean-100 text-ocean-700 font-bold text-xs rounded-md">ออเดอร์ #@order.Id</span>
+                            <h3 class="font-bold text-lg text-slate-800 mt-1">@order.ShopName</h3>
+                            <p class="text-xs text-slate-500"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i>@order.ShopLocation</p>
+                        </div>
+                        <div class="sm:text-right">
+                            <span class="text-xs text-slate-400">เวลานัดรับสินค้า</span>
+                            <div class="text-xl font-extrabold text-ocean-600">
+                                <i class="fa-regular fa-clock mr-1"></i>@order.PickupTime
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stepper Progress Bar (Page 4) -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 py-2">
+                        @for (int i = 0; i < steps.Length; i++)
+                        {
+                            var s = steps[i];
+                            bool isDone = i <= currentStepIdx;
+                            bool isCurrent = i == currentStepIdx;
+                            string circleBg = isDone ? "bg-ocean-600 text-white shadow-md shadow-ocean-200" : "bg-slate-100 text-slate-400";
+                            string textFont = isCurrent ? "font-bold text-ocean-700" : isDone ? "font-semibold text-slate-700" : "text-slate-400";
+
+                            <div class="flex items-center gap-3 p-3 rounded-2xl @(isCurrent ? "bg-ocean-50 border border-ocean-200" : "")">
+                                <div class="w-10 h-10 rounded-xl @circleBg flex items-center justify-center text-base shrink-0">
+                                    <i class="fa-solid @s.Icon"></i>
+                                </div>
+                                <div>
+                                    <div class="text-[10px] text-slate-400 uppercase">ขั้นตอนที่ @(i + 1)</div>
+                                    <div class="text-xs @textFont">@s.Title</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Order Summary Items -->
+                    <div class="bg-slate-50 p-4 rounded-2xl text-xs space-y-2">
+                        <div class="flex justify-between items-center mb-1">
+                            <span class="font-bold text-slate-700">รายการที่สั่ง:</span>
+                            @if (!string.IsNullOrEmpty(order.Note))
+                            {
+                                <span class="text-[11px] text-amber-700 bg-amber-100 px-2 py-0.5 rounded">หมายเหตุ: @order.Note</span>
+                            }
+                        </div>
+                        @foreach (var it in order.Items)
+                        {
+                            <div class="flex justify-between text-slate-600">
+                                <span>@it.Name x @it.Quantity</span>
+                                <span class="font-semibold">฿@((it.Price * it.Quantity).ToString("N0"))</span>
+                            </div>
+                        }
+                        <div class="border-t border-slate-200 pt-2 mt-2 flex justify-between font-bold text-sm text-slate-800">
+                            <span>ยอดรวมเงินสดที่ต้องชำระหน้าร้าน:</span>
+                            <span class="text-ocean-600 font-extrabold text-base">฿@order.TotalPrice.ToString("N0")</span>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>

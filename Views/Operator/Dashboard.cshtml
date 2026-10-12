@@ -1,0 +1,288 @@
+﻿@model FoodPreOrder.Models.ViewModels.OperatorDashboardViewModel
+@{
+    Layout = "_LayoutOperator";
+    ViewData["Title"] = "จัดการร้านค้า";
+}
+
+<div class="space-y-8">
+    <!-- Header Banner (Page 5) -->
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+        <div>
+            <span class="px-2.5 py-1 bg-ocean-100 text-ocean-700 text-xs font-bold rounded-md">ผู้ประกอบการ / Merchant Operator</span>
+            <h2 class="text-2xl font-bold text-slate-800 mt-1">@Model.ShopName</h2>
+            <p class="text-sm text-slate-500">จัดการออเดอร์ที่เข้ามา และบริหารรายการเมนูอาหาร</p>
+        </div>
+        <button onclick="openAddMenuModal()" class="px-4 py-2.5 bg-ocean-600 hover:bg-ocean-700 text-white font-medium rounded-xl text-sm shadow-md shadow-ocean-200 flex items-center gap-2 transition-all">
+            <i class="fa-solid fa-plus"></i> เพิ่มเมนูอาหารใหม่
+        </button>
+    </div>
+
+    <!-- Analytical Overview Cards (Page 5) -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-baht-sign"></i>
+            </div>
+            <div>
+                <p class="text-xs text-slate-500 font-medium">ยอดขายวันนี้ (ประมาณ)</p>
+                <h3 class="text-xl font-bold text-slate-800">฿@Model.TodaySales.ToString("N0")</h3>
+            </div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-kitchen-set"></i>
+            </div>
+            <div>
+                <p class="text-xs text-slate-500 font-medium">ออเดอร์รอปรุง</p>
+                <h3 class="text-xl font-bold text-slate-800">@Model.PendingOrdersCount</h3>
+            </div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-ocean-50 text-ocean-600 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div>
+                <p class="text-xs text-slate-500 font-medium">เสร็จสิ้นแล้ววันนี้</p>
+                <h3 class="text-xl font-bold text-slate-800">@Model.CompletedOrdersCount</h3>
+            </div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+            <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                <i class="fa-solid fa-burger"></i>
+            </div>
+            <div>
+                <p class="text-xs text-slate-500 font-medium">จำนวนเมนูทั้งหมด</p>
+                <h3 class="text-xl font-bold text-slate-800">@Model.TotalMenusCount</h3>
+            </div>
+        </div>
+    </div>
+
+    <!-- Merchant Analytics Charts Section (Page 5) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="font-bold text-slate-800 mb-4 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-chart-line text-ocean-600"></i> ยอดขายแยกตามช่วงเวลา (วันนี้)
+            </h3>
+            <div class="h-60 relative">
+                <canvas id="operatorSalesChart"></canvas>
+            </div>
+        </div>
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+            <h3 class="font-bold text-slate-800 mb-4 text-sm flex items-center gap-2">
+                <i class="fa-solid fa-chart-pie text-ocean-600"></i> สัดส่วนเมนูขายดี
+            </h3>
+            <div class="h-60 relative">
+                <canvas id="operatorTopDishesChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders Management Table (Page 5: เชื่อมต่อกันในหน้าเดียว "ต่อกัน") -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+            <div>
+                <h3 class="font-bold text-slate-800">รายการออเดอร์ที่เข้ามา (Pre-Orders)</h3>
+                <span class="text-xs text-slate-500">รับชำระเงินสดหน้าร้านเมื่อลูกค้ารับสินค้า</span>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm text-slate-600">
+                <thead class="bg-slate-50 text-xs text-slate-500 uppercase tracking-wider">
+                    <tr>
+                        <th class="p-4">ID ออเดอร์</th>
+                        <th class="p-4">ชื่อผู้สั่ง / เบอร์โทร</th>
+                        <th class="p-4">รายการอาหาร</th>
+                        <th class="p-4">เวลานัดรับ</th>
+                        <th class="p-4">ยอดรวมเงินสด</th>
+                        <th class="p-4">สถานะ</th>
+                        <th class="p-4 text-center">จัดการสถานะ</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    @if (Model.Orders.Count == 0)
+                    {
+                        <tr>
+                            <td colspan="7" class="p-6 text-center text-slate-400">ยังไม่มีรายการออเดอร์ในขณะนี้</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var ord in Model.Orders)
+                        {
+                            <tr class="hover:bg-slate-50">
+                                <td class="p-4 font-bold text-ocean-600">#@ord.Id</td>
+                                <td class="p-4">
+                                    <div class="font-semibold text-slate-800">@ord.CustomerName</div>
+                                    <div class="text-xs text-slate-400">@ord.CustomerPhone</div>
+                                </td>
+                                <td class="p-4 text-xs">
+                                    @string.Join(", ", ord.Items.Select(i => $"{i.Name} ({i.Quantity})"))
+                                </td>
+                                <td class="p-4 font-bold text-amber-600">@ord.PickupTime</td>
+                                <td class="p-4 font-extrabold text-slate-800">฿@ord.TotalPrice.ToString("N0")</td>
+                                <td class="p-4">
+                                    @switch (ord.Status)
+                                    {
+                                        case FoodPreOrder.Models.Domain.OrderStatus.PENDING:
+                                            <span class="px-2.5 py-1 text-[11px] font-bold rounded-md bg-blue-100 text-blue-700">รอรับออเดอร์</span>
+                                            break;
+                                        case FoodPreOrder.Models.Domain.OrderStatus.COOKING:
+                                            <span class="px-2.5 py-1 text-[11px] font-bold rounded-md bg-amber-100 text-amber-700">กำลังปรุง</span>
+                                            break;
+                                        case FoodPreOrder.Models.Domain.OrderStatus.READY:
+                                            <span class="px-2.5 py-1 text-[11px] font-bold rounded-md bg-purple-100 text-purple-700">พร้อมรับ</span>
+                                            break;
+                                        case FoodPreOrder.Models.Domain.OrderStatus.COMPLETED:
+                                            <span class="px-2.5 py-1 text-[11px] font-bold rounded-md bg-emerald-100 text-emerald-700">เสร็จสิ้น</span>
+                                            break;
+                                    }
+                                </td>
+                                <td class="p-4 text-center">
+                                    <form asp-action="UpdateOrderStatus" method="post" class="inline">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="orderId" value="@ord.Id" />
+                                        <select name="status" onchange="this.form.submit()" class="text-xs border border-slate-200 rounded-lg p-1.5 bg-white focus:ring-2 focus:ring-ocean-500">
+                                            <option value="PENDING" selected="@(ord.Status == FoodPreOrder.Models.Domain.OrderStatus.PENDING)">รอรับออเดอร์</option>
+                                            <option value="COOKING" selected="@(ord.Status == FoodPreOrder.Models.Domain.OrderStatus.COOKING)">กำลังปรุง</option>
+                                            <option value="READY" selected="@(ord.Status == FoodPreOrder.Models.Domain.OrderStatus.READY)">พร้อมรับ</option>
+                                            <option value="COMPLETED" selected="@(ord.Status == FoodPreOrder.Models.Domain.OrderStatus.COMPLETED)">เสร็จสิ้น</option>
+                                        </select>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Menu CRUD Management Section (Page 5: "ต่อกัน" กับส่วนด้านบน) -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+            <div>
+                <h3 class="font-bold text-slate-800 text-base">รายการเมนูอาหารของร้าน</h3>
+                <p class="text-xs text-slate-500">สามารถเพิ่ม ลบ หรือแก้ไขราคาและเวลาเตรียมของเมนูได้</p>
+            </div>
+            <button onclick="openAddMenuModal()" class="px-3 py-1.5 bg-ocean-50 text-ocean-700 rounded-xl text-xs font-bold hover:bg-ocean-100">
+                + เพิ่มเมนู
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            @foreach (var item in Model.MenuItems)
+            {
+                <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <img src="@item.ImageUrl" class="w-14 h-14 rounded-xl object-cover" onerror="this.src='https://placehold.co/100x100'">
+                        <div>
+                            <span class="text-[10px] px-2 py-0.5 bg-white border border-slate-200 rounded font-semibold text-slate-500">@item.Category</span>
+                            <h4 class="font-bold text-sm text-slate-800 mt-0.5">@item.Name</h4>
+                            <div class="text-xs text-ocean-600 font-extrabold">฿@item.Price.ToString("N0") <span class="text-[11px] font-normal text-slate-400">(@item.PrepTimeMinutes นาที)</span></div>
+                        </div>
+                    </div>
+                    <form asp-action="DeleteMenu" method="post" onsubmit="return confirm('ยืนยันลบเมนูนี้?')">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@item.Id" />
+                        <button type="submit" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl text-sm" title="ลบเมนูอาหาร">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal: Add New Menu -->
+<div id="modal-add-menu" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+        <button onclick="closeAddMenuModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+            <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+        <h3 class="text-lg font-bold text-slate-800 mb-4">เพิ่มเมนูอาหารใหม่</h3>
+
+        <form asp-action="AddMenu" method="post" class="space-y-3">
+            @Html.AntiForgeryToken()
+            <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">ชื่อเมนูอาหาร *</label>
+                <input type="text" name="Name" required placeholder="ข้าวผัดทะเลต้มยำ" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">ราคา (บาท) *</label>
+                    <input type="number" name="Price" required placeholder="85" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">เวลาเตรียม (นาที) *</label>
+                    <input type="number" name="PrepTimeMinutes" value="15" required class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500" />
+                </div>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">หมวดหมู่อาหาร *</label>
+                <select name="Category" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500 bg-white">
+                    <option value="อาหารจานเดียว">อาหารจานเดียว</option>
+                    <option value="เครื่องดื่ม">เครื่องดื่ม</option>
+                    <option value="เบเกอรี่">เบเกอรี่</option>
+                    <option value="ทานเล่น">ทานเล่น</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-slate-700 mb-1">รูปภาพ URL</label>
+                <input type="text" name="ImageUrl" placeholder="https://images.unsplash.com/..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500" />
+            </div>
+            <button type="submit" class="w-full py-3 bg-ocean-600 hover:bg-ocean-700 text-white font-bold rounded-xl text-sm shadow-md mt-2">
+                บันทึกเมนูอาหาร
+            </button>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function openAddMenuModal() {
+            document.getElementById('modal-add-menu').classList.remove('hidden');
+        }
+        function closeAddMenuModal() {
+            document.getElementById('modal-add-menu').classList.add('hidden');
+        }
+
+        // Initialize Operator Charts
+        document.addEventListener('DOMContentLoaded', function () {
+            const ctx1 = document.getElementById('operatorSalesChart')?.getContext('2d');
+            const ctx2 = document.getElementById('operatorTopDishesChart')?.getContext('2d');
+
+            if (ctx1) {
+                new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels: ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'],
+                        datasets: [{
+                            label: 'ยอดขายวันนี้ (บาท)',
+                            data: [350, 890, 2450, 1100, 1800, 950, 1200],
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            fill: true,
+                            tension: 0.35
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            if (ctx2) {
+                new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['ข้าวผัดซีฟู้ดต้มยำ', 'สเต๊กปลากะพง', 'บลูฮาวายโซดา', 'อื่นๆ'],
+                        datasets: [{
+                            data: [45, 25, 20, 10],
+                            backgroundColor: ['#2563eb', '#3b82f6', '#60a5fa', '#cbd5e1']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+        });
+    </script>
+}

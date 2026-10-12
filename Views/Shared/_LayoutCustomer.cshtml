@@ -1,0 +1,317 @@
+﻿<!DOCTYPE html>
+<html lang="th" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewData["Title"] - FoodPreOrder (Ocean Blue Express)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome 6 Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Kanit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ocean: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb', // Primary Ocean Blue
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Kanit', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Kanit', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Top Header / Navigation (Page 1) -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                
+                <!-- Logo -->
+                <a asp-controller="Customer" asp-action="Index" class="flex items-center space-x-3 cursor-pointer">
+                    <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-ocean-600 to-ocean-400 flex items-center justify-center text-white shadow-md shadow-ocean-200">
+                        <i class="fa-solid font-bold fa-utensils text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-xl font-bold bg-gradient-to-r from-ocean-700 to-ocean-500 bg-clip-text text-transparent">FoodPreOrder</span>
+                        <span class="block text-[10px] text-ocean-600 font-semibold tracking-wider uppercase -mt-1">Ocean Blue Express</span>
+                    </div>
+                </a>
+
+                <!-- Central Navigation Links -->
+                <nav class="hidden md:flex space-x-2">
+                    <a asp-controller="Customer" asp-action="Index" class="px-4 py-2 rounded-lg text-sm font-medium transition-all @(ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "text-ocean-600 bg-ocean-50" : "text-slate-600 hover:text-ocean-600 hover:bg-slate-50")">
+                        <i class="fa-solid fa-store mr-1.5"></i>ร้านอาหารและเมนู
+                    </a>
+                    <a asp-controller="Customer" asp-action="Tracking" class="px-4 py-2 rounded-lg text-sm font-medium transition-all @(ViewContext.RouteData.Values["action"]?.ToString() == "Tracking" ? "text-ocean-600 bg-ocean-50" : "text-slate-600 hover:text-ocean-600 hover:bg-slate-50")">
+                        <i class="fa-solid fa-clock-rotate-left mr-1.5"></i>ติดตามคำสั่งซื้อ
+                    </a>
+                </nav>
+
+                <!-- Right Actions (Cart & Customer Login Only - Page 1) -->
+                <div class="flex items-center space-x-3">
+                    <!-- Cart Button (Page 3) -->
+                    <button onclick="openCartModal()" class="relative p-2.5 text-slate-600 hover:text-ocean-600 hover:bg-ocean-50 rounded-xl transition-all">
+                        <i class="fa-solid fa-basket-shopping text-xl"></i>
+                        <span id="header-cart-badge" class="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white">
+                            @(ViewBag.CartCount ?? 0)
+                        </span>
+                    </button>
+
+                    <!-- User Profile / Auth Area (กดเข้า เฉพาะ Customer เท่านั้น - Page 1) -->
+                    <div>
+                        @if (ViewBag.CurrentCustomer != null)
+                        {
+                            var cust = (FoodPreOrder.Models.Domain.UserAccount)ViewBag.CurrentCustomer;
+                            <div class="flex items-center gap-3">
+                                <div class="text-right hidden sm:block">
+                                    <div class="font-bold text-xs text-slate-800">@cust.FullName</div>
+                                    <span class="text-[10px] px-2 py-0.5 bg-ocean-100 text-ocean-700 font-semibold rounded-full">ลูกค้า</span>
+                                </div>
+                                <a asp-controller="Customer" asp-action="Logout" class="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 transition-all" title="ออกจากระบบ">
+                                    <i class="fa-solid fa-arrow-right-from-bracket text-lg"></i>
+                                </a>
+                            </div>
+                        }
+                        else
+                        {
+                            <!-- Button specifically for Customer: "กดเข้า เฉพาะ Customer เท่านั้น" -->
+                            <a asp-controller="Customer" asp-action="Login" class="px-4 py-2 bg-ocean-600 hover:bg-ocean-700 text-white font-medium text-sm rounded-xl shadow-md shadow-ocean-200 transition-all flex items-center gap-2">
+                                <i class="fa-solid fa-user"></i> เข้าสู่ระบบ / สมัครสมาชิก
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Notification Toast Banners -->
+    <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none">
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="bg-emerald-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-sm pointer-events-auto">
+                <i class="fa-solid fa-circle-check text-lg"></i>
+                <span>@TempData["SuccessMessage"]</span>
+            </div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="bg-rose-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-sm pointer-events-auto">
+                <i class="fa-solid fa-circle-exclamation text-lg"></i>
+                <span>@TempData["ErrorMessage"]</span>
+            </div>
+        }
+        @if (TempData["InfoMessage"] != null)
+        {
+            <div class="bg-ocean-600 text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-sm pointer-events-auto">
+                <i class="fa-solid fa-bell text-lg"></i>
+                <span>@TempData["InfoMessage"]</span>
+            </div>
+        }
+    </div>
+
+    <!-- MAIN BODY CONTENT -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        @RenderBody()
+    </main>
+
+    <!-- FOOTER WITH LINKS TO SEPARATE PORTALS (Page 7) -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-6 text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                © 2026 <strong>FoodPreOrder (Ocean Blue Express)</strong> - ระบบสั่งอาหารล่วงหน้ารับหน้าร้านและชำระเงินสด
+            </div>
+            <div class="flex items-center space-x-4">
+                <span class="text-slate-400">พอร์ทัลเฉพาะทาง:</span>
+                <a asp-controller="Operator" asp-action="Login" class="text-ocean-600 hover:underline flex items-center gap-1">
+                    <i class="fa-solid fa-shop"></i> สำหรับร้านค้า (Operator)
+                </a>
+                <span class="text-slate-300">|</span>
+                <a asp-controller="Admin" asp-action="Login" class="text-purple-600 hover:underline flex items-center gap-1">
+                    <i class="fa-solid fa-user-shield"></i> ผู้ดูแลระบบ (Backend)
+                </a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- CART MODAL (Page 3: รายการในตะกร้า + ระบุข้อมูลเพิ่มเติม + ชำระเงินสดหน้าร้าน) -->
+    <div id="modal-cart" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex justify-end">
+        <div class="bg-white max-w-md w-full h-full p-6 flex flex-col justify-between shadow-2xl relative overflow-y-auto">
+            <div>
+                <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-4">
+                    <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-basket-shopping text-ocean-600"></i> ตระกร้าคำสั่งซื้อ
+                    </h3>
+                    <button onclick="closeCartModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Cash Payment Notice Badge (Page 3) -->
+                <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-xl text-xs flex items-center gap-2.5 mb-4">
+                    <i class="fa-solid fa-money-bill-wave text-emerald-600 text-xl"></i>
+                    <div>
+                        <span class="font-bold">ชำระเงินสดหน้าร้านเท่านั้น:</span>
+                        <p class="text-[11px] text-emerald-700">ไม่ต้องโอนเงินออนไลน์ รับอาหารพร้อมจ่ายเงินสดกับพนักงาน</p>
+                    </div>
+                </div>
+
+                <!-- Cart Items List Container -->
+                <div id="cart-items-container" class="space-y-3 max-h-[35vh] overflow-y-auto custom-scrollbar pr-1">
+                    <!-- Dynamic Cart Items via AJAX -->
+                </div>
+            </div>
+
+            <!-- Checkout Details Form (Page 3 & 4) -->
+            <form asp-controller="Customer" asp-action="Checkout" method="post" class="border-t border-slate-100 pt-4 space-y-4">
+                @Html.AntiForgeryToken()
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">เวลานัดรับอาหารล่วงหน้า *</label>
+                    <input type="time" name="PickupTime" required class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-ocean-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">หมายเหตุเพิ่มเติมถึงร้านค้า</label>
+                    <input type="text" name="Note" placeholder="เช่น ใส่กล่อง / ไม่เผ็ด / แยกน้ำ..." class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-ocean-500">
+                </div>
+
+                <!-- Summary Total Price -->
+                <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+                    <span class="text-sm font-medium text-slate-600">ยอดรวมสุทธิ (จ่ายเงินสด):</span>
+                    <span id="cart-total-price" class="text-2xl font-extrabold text-ocean-600">฿0</span>
+                </div>
+
+                <button type="submit" class="w-full py-3.5 bg-ocean-600 hover:bg-ocean-700 text-white font-bold rounded-xl text-base shadow-lg shadow-ocean-200 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-check-circle"></i> ยืนยันการสั่งซื้อล่วงหน้า
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- CLIENT CART AJAX SCRIPT -->
+    <script>
+        function showNotification(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgClass = type === 'error' ? 'bg-rose-600' : type === 'success' ? 'bg-emerald-600' : 'bg-ocean-600';
+            const icon = type === 'error' ? 'fa-circle-exclamation' : type === 'success' ? 'fa-circle-check' : 'fa-bell';
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-sm pointer-events-auto transition-all`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-lg"></i><span>${msg}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3500);
+        }
+
+        function addToCart(foodId) {
+            fetch('/Customer/AddToCart?foodId=' + encodeURIComponent(foodId), {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.requireLogin) {
+                    showNotification(data.message, 'error');
+                    setTimeout(() => {
+                        window.location.href = '/Customer/Login';
+                    }, 1000);
+                } else if (data.success) {
+                    document.getElementById('header-cart-badge').textContent = data.cartCount;
+                    showNotification(data.message, 'success');
+                } else {
+                    showNotification(data.message, 'error');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showNotification('เกิดข้อผิดพลาดในการเพิ่มรายการลงตะกร้า', 'error');
+            });
+        }
+
+        function openCartModal() {
+            fetch('/Customer/GetCartJson')
+                .then(res => res.json())
+                .then(data => {
+                    renderCartItems(data.items, data.grandTotal);
+                    document.getElementById('modal-cart').classList.remove('hidden');
+                });
+        }
+
+        function closeCartModal() {
+            document.getElementById('modal-cart').classList.add('hidden');
+        }
+
+        function renderCartItems(items, grandTotal) {
+            const container = document.getElementById('cart-items-container');
+            const totalEl = document.getElementById('cart-total-price');
+
+            if (!items || items.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-400">
+                        <i class="fa-solid fa-basket-shopping text-3xl mb-2"></i>
+                        <p class="text-xs">ยังไม่มีรายการอาหารในตะกร้า</p>
+                    </div>
+                `;
+                totalEl.textContent = '฿0';
+                return;
+            }
+
+            container.innerHTML = items.map(item => `
+                <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                    <div class="flex-1 pr-2">
+                        <h4 class="font-bold text-xs text-slate-800">${item.name}</h4>
+                        <p class="text-[10px] text-slate-500">${item.shopName}</p>
+                        <span class="text-xs font-semibold text-ocean-600">฿${item.price}</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button type="button" onclick="changeQty('${item.foodId}', -1)" class="w-6 h-6 rounded-lg bg-white border border-slate-200 text-xs font-bold hover:bg-slate-100 flex items-center justify-center">-</button>
+                        <span class="text-xs font-bold w-4 text-center">${item.quantity}</span>
+                        <button type="button" onclick="changeQty('${item.foodId}', 1)" class="w-6 h-6 rounded-lg bg-white border border-slate-200 text-xs font-bold hover:bg-slate-100 flex items-center justify-center">+</button>
+                    </div>
+                </div>
+            `).join('');
+
+            totalEl.textContent = `฿${grandTotal}`;
+        }
+
+        function changeQty(foodId, delta) {
+            fetch(`/Customer/UpdateCartQty?foodId=${encodeURIComponent(foodId)}&delta=${delta}`, {
+                method: 'POST',
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('header-cart-badge').textContent = data.cartCount;
+                    renderCartItems(data.items, data.grandTotal);
+                }
+            });
+        }
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

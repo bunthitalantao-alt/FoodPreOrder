@@ -1,0 +1,101 @@
+@model FoodPreOrder.Models.ViewModels.OperatorRegisterViewModel
+@{
+    Layout = "_LayoutOperator";
+    ViewData["Title"] = "ลงทะเบียนเปิดร้านค้าใหม่";
+}
+
+<div class="max-w-2xl mx-auto my-8 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-xl">
+    <div class="text-center mb-6">
+        <span class="px-3 py-1 bg-ocean-100 text-ocean-700 text-xs font-bold rounded-full">เปิดร้านค้าใหม่ / Merchant Registration</span>
+        <h2 class="text-2xl font-extrabold text-slate-800 mt-2">ลงทะเบียนผู้ประกอบการร้านค้า</h2>
+        <p class="text-xs text-slate-500 mt-1">กรอกข้อมูลร้านค้าเพื่อเริ่มรับออเดอร์สั่งอาหารล่วงหน้ารับหน้าร้าน</p>
+    </div>
+
+    <form asp-action="Register" method="post" class="space-y-4">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-rose-600 text-xs bg-rose-50 p-3 rounded-xl"></div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label asp-for="OwnerName" class="block text-xs font-medium text-slate-700 mb-1">ชื่อ-นามสกุล เจ้าของร้าน *</label>
+                <input asp-for="OwnerName" placeholder="นายวิชัย อร่อยดี" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500" />
+                <span asp-validation-for="OwnerName" class="text-rose-500 text-xs"></span>
+            </div>
+            <div>
+                <label asp-for="ShopName" class="block text-xs font-medium text-slate-700 mb-1">ชื่อร้านค้า (Shop Name) *</label>
+                <input asp-for="ShopName" placeholder="โอเชี่ยน ไบท์ส (Ocean Bites)" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500" />
+                <span asp-validation-for="ShopName" class="text-rose-500 text-xs"></span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label asp-for="Category" class="block text-xs font-medium text-slate-700 mb-1">หมวดหมู่อาหารหลัก *</label>
+                <select asp-for="Category" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500 bg-white">
+                    <option value="อาหารจานเดียว">อาหารจานเดียว / ตามสั่ง</option>
+                    <option value="เครื่องดื่ม">เครื่องดื่ม & ชา/กาแฟ</option>
+                    <option value="เบเกอรี่">เบเกอรี่ & ของหวาน</option>
+                    <option value="ทานเล่น">ทานเล่น & ฟาสต์ฟู้ด</option>
+                </select>
+                <span asp-validation-for="Category" class="text-rose-500 text-xs"></span>
+            </div>
+            <div>
+                <label asp-for="Phone" class="block text-xs font-medium text-slate-700 mb-1">เบอร์โทรศัพท์ติดต่อร้านค้า *</label>
+                <input asp-for="Phone" placeholder="02-999-8888" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500" />
+                <span asp-validation-for="Phone" class="text-rose-500 text-xs"></span>
+            </div>
+        </div>
+
+        <div>
+            <label asp-for="Location" class="block text-xs font-medium text-slate-700 mb-1">ที่ตั้งร้านค้า / จุดนัดรับอาหารหน้าร้าน *</label>
+            <input asp-for="Location" placeholder="อาคาร A ชั้น 1 ใกล้ประตูทางเข้าหลัก" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500" />
+            <span asp-validation-for="Location" class="text-rose-500 text-xs"></span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label asp-for="OperatingHours" class="block text-xs font-medium text-slate-700 mb-1">เวลาเปิด - ปิด ให้บริการ *</label>
+                <input asp-for="OperatingHours" placeholder="08:00 - 20:00 น." class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500" />
+                <span asp-validation-for="OperatingHours" class="text-rose-500 text-xs"></span>
+            </div>
+            <div>
+                <label asp-for="TaxId" class="block text-xs font-medium text-slate-700 mb-1">เลขประจำตัวผู้เสียภาษี / พาณิชย์</label>
+                <input asp-for="TaxId" placeholder="1234567890123" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500" />
+            </div>
+        </div>
+
+        <div>
+            <label asp-for="BankAccount" class="block text-xs font-medium text-slate-700 mb-1">บัญชีธนาคารสำหรับรับยอดสรุปรายเดือน *</label>
+            <input asp-for="BankAccount" placeholder="กสิกรไทย 012-3-45678-9 (บจก. โอเชี่ยนฟู้ด)" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500" />
+            <span asp-validation-for="BankAccount" class="text-rose-500 text-xs"></span>
+        </div>
+
+        <div class="border-t border-slate-100 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label asp-for="Email" class="block text-xs font-medium text-slate-700 mb-1">อีเมลสำหรับเข้าสู่ระบบ *</label>
+                <input asp-for="Email" placeholder="shop@domain.com" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500" />
+                <span asp-validation-for="Email" class="text-rose-500 text-xs"></span>
+            </div>
+            <div>
+                <label asp-for="Password" class="block text-xs font-medium text-slate-700 mb-1">รหัสผ่านสำหรับเข้าสู่ระบบ *</label>
+                <input asp-for="Password" placeholder="••••••••" class="w-full px-3.5 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500" />
+                <span asp-validation-for="Password" class="text-rose-500 text-xs"></span>
+            </div>
+        </div>
+
+        <button type="submit" class="w-full py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm shadow-md transition-all flex items-center justify-center gap-2 mt-4">
+            <i class="fa-solid fa-paper-plane"></i> ยืนยันส่งข้อมูลเปิดร้านค้า
+        </button>
+    </form>
+
+    <div class="mt-4 pt-3 border-t border-slate-100 flex justify-between items-center text-xs">
+        <a asp-controller="Customer" asp-action="Index" class="font-semibold text-ocean-600 hover:underline flex items-center gap-1">
+            <i class="fa-solid fa-house"></i> กลับสู่หน้าหลัก
+        </a>
+        <a asp-action="Login" class="text-slate-500 hover:underline">มีบัญชีร้านค้าแล้ว? เข้าสู่ระบบ</a>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

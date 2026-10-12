@@ -1,0 +1,1702 @@
+<!DOCTYPE html>
+<html lang="th" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FoodPreOrder - ระบบสั่งอาหารล่วงหน้า (Ocean Blue Theme)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Kanit & Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ocean: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            200: '#bfdbfe',
+                            300: '#93c5fd',
+                            400: '#60a5fa',
+                            500: '#3b82f6',
+                            600: '#2563eb', // Primary Ocean Blue
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Kanit', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Kanit', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
+</head>
+<body class="h-full text-slate-800 flex flex-col min-h-screen">
+
+    <!-- Top Header / Navigation (Adaptive per role per PDF) -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-40 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                
+                <!-- Logo -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="handleLogoClick()">
+                    <div id="logo-icon-box" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-ocean-600 to-ocean-400 flex items-center justify-center text-white shadow-md shadow-ocean-200">
+                        <i id="logo-icon" class="fa-solid font-bold fa-utensils text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="text-xl font-bold bg-gradient-to-r from-ocean-700 to-ocean-500 bg-clip-text text-transparent">FoodPreOrder</span>
+                        <span id="logo-subtext" class="block text-[10px] text-ocean-600 font-semibold tracking-wider uppercase -mt-1">Ocean Blue Express</span>
+                    </div>
+                </div>
+
+                <!-- Navigation Links per Role (Page 1, 5, 6) -->
+                <!-- 1. Customer Navigation (Page 1) -->
+                <nav class="flex space-x-1" id="nav-customer">
+                    <button onclick="switchCustomerTab('browse')" id="nav-browse" class="px-4 py-2 rounded-lg text-sm font-medium transition-all text-ocean-600 bg-ocean-50">
+                        <i class="fa-solid fa-store mr-1.5"></i>ร้านอาหารและเมนู
+                    </button>
+                    <button onclick="switchCustomerTab('tracking')" id="nav-tracking" class="px-4 py-2 rounded-lg text-sm font-medium transition-all text-slate-600 hover:text-ocean-600 hover:bg-slate-50">
+                        <i class="fa-solid fa-clock-rotate-left mr-1.5"></i>ติดตามคำสั่งซื้อ
+                        <span id="active-order-badge" class="ml-1 px-1.5 py-0.5 text-xs bg-amber-500 text-white rounded-full font-bold">1</span>
+                    </button>
+                </nav>
+
+                <!-- 2. Operator Navigation (Page 5: - มีแค่ หน้า จัดการร้านค้า + ปุ่มกลับหน้าหลัก) -->
+                <nav class="hidden flex items-center space-x-2" id="nav-operator">
+                    <button class="px-4 py-2 rounded-lg text-sm font-bold text-ocean-600 bg-ocean-50">
+                        <i class="fa-solid fa-store mr-1.5"></i>จัดการร้านค้า
+                    </button>
+                    <button onclick="switchToPortal('customer')" class="px-3.5 py-2 text-xs font-semibold text-ocean-600 hover:text-ocean-700 bg-ocean-50 hover:bg-ocean-100 rounded-xl transition-all flex items-center gap-1.5 border border-ocean-200 shadow-sm">
+                        <i class="fa-solid fa-house"></i> กลับสู่หน้าหลัก
+                    </button>
+                </nav>
+
+                <!-- 3. Admin Navigation (Page 6: มีแค่ ผู้ดูแลระบบ) -->
+                <nav class="hidden flex space-x-1" id="nav-admin">
+                    <button class="px-4 py-2 rounded-lg text-sm font-bold text-purple-700 bg-purple-50">
+                        <i class="fa-solid fa-gauge-high mr-1.5"></i>ผู้ดูแลระบบ
+                    </button>
+                </nav>
+
+                <!-- Right Actions (Cart & Auth Profile) -->
+                <div class="flex items-center space-x-3">
+                    <!-- Cart Button (Only in Customer Mode - Page 1 & 3) -->
+                    <button id="header-cart-btn" onclick="openCartModal()" class="relative p-2.5 text-slate-600 hover:text-ocean-600 hover:bg-ocean-50 rounded-xl transition-all">
+                        <i class="fa-solid fa-basket-shopping text-xl"></i>
+                        <span id="cart-count-badge" class="absolute -top-1 -right-1 w-5 h-5 bg-rose-500 text-white text-xs font-bold rounded-full flex items-center justify-center border-2 border-white">0</span>
+                    </button>
+
+                    <!-- User Profile / Auth Area -->
+                    <div id="auth-area">
+                        <!-- Rendered via JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Alert Toast Message Banner -->
+    <div id="toast-container" class="fixed top-20 right-4 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none"></div>
+
+    <!-- MAIN CONTENT CONTAINERS -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ========================================== -->
+        <!-- VIEW 1: CUSTOMER - BROWSE FOOD (Page 1)    -->
+        <!-- ========================================== -->
+        <section id="view-customer-browse" class="space-y-6">
+            <!-- Hero Banner (Page 1) -->
+            <div class="relative bg-gradient-to-r from-ocean-700 via-ocean-600 to-ocean-800 rounded-3xl p-6 sm:p-10 text-white overflow-hidden shadow-xl shadow-ocean-100">
+                <div class="absolute -right-10 -bottom-10 opacity-10 text-white">
+                    <i class="fa-solid fa-bowl-food text-[240px]"></i>
+                </div>
+                <div class="relative z-10 max-w-2xl space-y-3">
+                    <span class="inline-block px-3 py-1 bg-white/20 backdrop-blur-md text-xs font-semibold rounded-full uppercase tracking-wider text-ocean-100">
+                        <i class="fa-solid fa-bolt mr-1 text-amber-300"></i>สั่งล่วงหน้า ไม่ต้องรอคิว
+                    </span>
+                    <h1 class="text-2xl sm:text-4xl font-extrabold leading-tight">
+                        อิ่มอร่อยตรงเวลา ชำระเงินสดหน้าร้านสะดวกยิ่งขึ้น
+                    </h1>
+                    <p class="text-ocean-100 text-sm sm:text-base font-light">
+                        เลือกร้านโปรด ระบุเวลาสั่งจองล่วงหน้า แล้วรับอาหารได้ทันทีโดยไม่ต้องรอนาน!
+                    </p>
+                </div>
+            </div>
+
+            <!-- Search and Filter Bar -->
+            <div class="flex flex-col md:flex-row gap-4 justify-between items-center bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <!-- Search Input -->
+                <div class="relative w-full md:w-96">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="search-input" oninput="handleSearch()" placeholder="ค้นหาเมนูอาหาร หรือ ชื่อร้านค้า..." class="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-ocean-500 focus:bg-white transition-all">
+                </div>
+
+                <!-- Category Pills Filter -->
+                <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 custom-scrollbar" id="category-pills">
+                    <!-- Dynamically rendered pills -->
+                </div>
+            </div>
+
+            <!-- Guest Ordering Rules Notice Banner (Page 1) -->
+            <div class="bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-xl flex items-start gap-3">
+                <i class="fa-solid fa-circle-info text-amber-500 text-lg mt-0.5"></i>
+                <div class="text-xs sm:text-sm text-amber-800">
+                    <span class="font-bold">หมายเหตุสำคัญ:</span> ท่านสามารถดูรายการอาหารได้โดยไม่ต้องเข้าสู่ระบบ แต่หากต้องการ <span class="font-semibold underline">เพิ่มลงตะกร้า</span> หรือ <span class="font-semibold underline">สั่งซื้อ</span> ระบบจะขอให้ท่านเข้าสู่ระบบหรือสมัครสมาชิกก่อนเสมอ
+                </div>
+            </div>
+
+            <!-- Food Menu Grid Section -->
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-fire text-rose-500"></i> เมนูอาหารแนะนำ
+                    </h2>
+                    <span id="menu-count" class="text-xs font-medium text-slate-500">กำลังแสดง 0 เมนู</span>
+                </div>
+                
+                <div id="food-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Dynamic Food Cards rendered here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- VIEW 2: CUSTOMER - ORDER TRACKING (Page 4)     -->
+        <!-- ============================================== -->
+        <section id="view-customer-tracking" class="hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold text-slate-800">ติดตามคำสั่งซื้อล่วงหน้า</h2>
+                    <p class="text-sm text-slate-500">ตรวจสอบสถานะและจุดนัดรับอาหารหน้าร้าน</p>
+                </div>
+                <button onclick="renderOrderTracking()" class="px-3.5 py-2 bg-slate-100 text-slate-600 rounded-xl hover:bg-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-all">
+                    <i class="fa-solid fa-rotate-right"></i> รีเฟรชสถานะ
+                </button>
+            </div>
+
+            <div id="tracking-container" class="space-y-6">
+                <!-- Dynamically Rendered Full-Width Orders (Page 4) -->
+            </div>
+        </section>
+
+        <!-- ========================================================== -->
+        <!-- VIEW 3: OPERATOR (MERCHANT) DASHBOARD (Page 5)             -->
+        <!-- - มีแค่ หน้า จัดการร้านค้า (No duplicate stepper at bottom) -->
+        <!-- ========================================================== -->
+        <section id="view-operator" class="hidden space-y-8">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div>
+                    <span class="px-2.5 py-1 bg-ocean-100 text-ocean-700 text-xs font-bold rounded-md">ผู้ประกอบการ / Merchant Operator</span>
+                    <h2 class="text-2xl font-bold text-slate-800 mt-1" id="merchant-shop-title">Ocean Bites (โอเชี่ยน ไบท์ส)</h2>
+                    <p class="text-sm text-slate-500" id="merchant-shop-desc">จัดการออเดอร์ที่เข้ามา และบริหารรายการเมนูอาหาร</p>
+                </div>
+                <button onclick="openAddMenuModal()" class="px-4 py-2.5 bg-ocean-600 hover:bg-ocean-700 text-white font-medium rounded-xl text-sm shadow-md shadow-ocean-200 flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i>เพิ่มเมนูอาหารใหม่
+                </button>
+            </div>
+
+            <!-- Merchant Analytical Overview Cards (Page 5) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-baht-sign"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">ยอดขายวันนี้ (ประมาณ)</p>
+                        <h3 class="text-xl font-bold text-slate-800" id="merchant-stat-sales">฿285</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-kitchen-set"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">ออเดอร์รอปรุง</p>
+                        <h3 class="text-xl font-bold text-slate-800" id="merchant-stat-pending">2</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-ocean-50 text-ocean-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-circle-check"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">เสร็จสิ้นแล้ววันนี้</p>
+                        <h3 class="text-xl font-bold text-slate-800" id="merchant-stat-completed">0</h3>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center text-xl">
+                        <i class="fa-solid fa-burger"></i>
+                    </div>
+                    <div>
+                        <p class="text-xs text-slate-500 font-medium">จำนวนเมนูทั้งหมด</p>
+                        <h3 class="text-xl font-bold text-slate-800" id="merchant-stat-menus">5</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Merchant Analytics Chart Section (Page 5) -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-4 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-ocean-600"></i> ยอดขายแยกตามช่วงเวลา (วันนี้)
+                    </h3>
+                    <div class="h-60 relative">
+                        <canvas id="merchantSalesChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-800 mb-4 text-sm flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-ocean-600"></i> สัดส่วนเมนูขายดี
+                    </h3>
+                    <div class="h-60 relative">
+                        <canvas id="merchantTopDishesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Order Management Table (Page 5: ต่อกัน) -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+                    <div>
+                        <h3 class="font-bold text-slate-800">รายการออเดอร์ที่เข้ามา (Pre-Orders)</h3>
+                        <span class="text-xs text-slate-500">รับชำระเงินสดหน้าร้านเมื่อลูกค้ารับสินค้า</span>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-xs text-slate-500 uppercase tracking-wider">
+                            <tr>
+                                <th class="p-4">ID ออเดอร์</th>
+                                <th class="p-4">ชื่อผู้สั่ง / เบอร์โทร</th>
+                                <th class="p-4">รายการอาหาร</th>
+                                <th class="p-4">เวลานัดรับ</th>
+                                <th class="p-4">ยอดรวมเงินสด</th>
+                                <th class="p-4">สถานะ</th>
+                                <th class="p-4 text-center">จัดการสถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="merchant-orders-tbody" class="divide-y divide-slate-100">
+                            <!-- Dynamic merchant order rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Menu CRUD Management Section (Page 5: ต่อกัน) -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 space-y-4">
+                <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                    <h3 class="font-bold text-slate-800 text-base">รายการเมนูอาหารของร้าน</h3>
+                    <button onclick="openAddMenuModal()" class="px-3 py-1.5 bg-ocean-50 text-ocean-700 rounded-xl text-xs font-bold hover:bg-ocean-100">
+                        + เพิ่มเมนู
+                    </button>
+                </div>
+                <div id="merchant-menu-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <!-- Dynamic Editable Menu Cards -->
+                </div>
+            </div>
+        </section>
+
+        <!-- ============================================== -->
+        <!-- VIEW 4: ADMIN DASHBOARD (BACKEND) (Page 6)     -->
+        <!-- ============================================== -->
+        <section id="view-admin" class="hidden space-y-8">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <span class="px-2.5 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-md">ผู้ดูแลระบบ / System Admin</span>
+                <h2 class="text-2xl font-bold text-slate-800 mt-1">แผงควบคุมระบบภาพรวม FoodPreOrder</h2>
+                <p class="text-sm text-slate-500">ตรวจสอบสถิติแพลตฟอร์ม และอนุมัติคำขอสมัครร้านค้าใหม่</p>
+            </div>
+
+            <!-- System Stats Grid (Page 6) -->
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <p class="text-xs text-slate-500 font-medium">ยอดขายรวมทั้งระบบ (GMV)</p>
+                    <h3 class="text-2xl font-bold text-ocean-600 mt-1" id="admin-stat-gmv">฿148,900</h3>
+                    <p class="text-[11px] text-emerald-600 mt-1 flex items-center gap-1">
+                        <i class="fa-solid fa-arrow-trend-up"></i> +12% จากสัปดาห์ก่อน
+                    </p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <p class="text-xs text-slate-500 font-medium">ร้านค้าที่ลงทะเบียนแล้ว</p>
+                    <h3 class="text-2xl font-bold text-slate-800 mt-1" id="admin-stat-merchants">2 ร้าน</h3>
+                    <p class="text-[11px] text-slate-500 mt-1">รอการตรวจสอบ 1 รายการ</p>
+                </div>
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                    <p class="text-xs text-slate-500 font-medium">ผู้ใช้งานฝั่งลูกค้า</p>
+                    <h3 class="text-2xl font-bold text-slate-800 mt-1" id="admin-stat-users">248 คน</h3>
+                    <p class="text-[11px] text-emerald-600 mt-1 flex items-center gap-1">
+                        <i class="fa-solid fa-user-plus"></i> +18 คนในสัปดาห์นี้
+                    </p>
+                </div>
+            </div>
+
+            <!-- Admin Chart Analytics (Page 6) -->
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="font-bold text-slate-800 mb-4 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-chart-area text-purple-600"></i> อัตราการเติบโตยอดขายรวมแพลตฟอร์ม (รายเดือน)
+                </h3>
+                <div class="h-64 relative">
+                    <canvas id="adminGmvChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Merchant Applications Review Table (Page 6) -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-100">
+                    <h3 class="font-bold text-slate-800">รายการคำขอลงทะเบียนผู้ประกอบการใหม่</h3>
+                    <p class="text-xs text-slate-500">ตรวจสอบรายละเอียดข้อมูลธุรกิจและบัญชีธนาคาร</p>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm text-slate-600">
+                        <thead class="bg-slate-50 text-xs text-slate-500 uppercase tracking-wider">
+                            <tr>
+                                <th class="p-4">ชื่อร้านค้า / เจ้าของ</th>
+                                <th class="p-4">หมวดหมู่</th>
+                                <th class="p-4">เบอร์โทร / อีเมล</th>
+                                <th class="p-4">จุดนัดรับ / เวลาเปิด-ปิด</th>
+                                <th class="p-4">เลขภาษี / บัญชีธนาคาร</th>
+                                <th class="p-4">สถานะ</th>
+                                <th class="p-4 text-center">การอนุมัติ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-merchants-tbody" class="divide-y divide-slate-100">
+                            <!-- Dynamically injected applications -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER WITH SEPARATE PORTALS (Page 7) -->
+    <footer class="bg-white border-t border-slate-200 mt-12 py-5 text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                © 2026 <strong>FoodPreOrder</strong> - สั่งอาหารล่วงหน้ารับหน้าร้าน ชำระเงินสด
+            </div>
+            <div class="flex items-center space-x-3">
+                <span class="text-slate-400">สลับโหมดพอร์ทัล (ตาม PDF):</span>
+                <button onclick="switchToPortal('customer')" class="text-ocean-600 font-bold hover:underline">
+                    <i class="fa-solid fa-user mr-1"></i>ลูกค้า (Customer)
+                </button>
+                <span class="text-slate-300">|</span>
+                <button onclick="switchToPortal('operator')" class="text-amber-600 font-bold hover:underline">
+                    <i class="fa-solid fa-shop mr-1"></i>ผู้ประกอบการ (Operator)
+                </button>
+                <span class="text-slate-300">|</span>
+                <button onclick="switchToPortal('admin')" class="text-purple-600 font-bold hover:underline">
+                    <i class="fa-solid fa-user-shield mr-1"></i>ผู้ดูแลระบบ (Backend)
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- ======================================================== -->
+    <!-- MODALS SECTION: SEPARATED LOGINS (Page 7: ของใครของมัน) -->
+    <!-- ======================================================== -->
+
+    <!-- 1. CUSTOMER AUTH MODAL (Page 1 & 2: กดเข้า เฉพาะ Customer เท่านั้น) -->
+    <div id="modal-customer-auth" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative my-8">
+            <button onclick="closeCustomerAuthModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- Customer Only Tag -->
+            <div class="flex items-center gap-2 mb-4">
+                <span class="px-2.5 py-1 bg-ocean-100 text-ocean-700 font-bold text-xs rounded-lg flex items-center gap-1.5">
+                    <i class="fa-solid fa-user"></i> ลูกค้า (Customer)
+                </span>
+                <span class="text-xs text-slate-400">สำหรับสั่งอาหารล่วงหน้ารับหน้าร้าน</span>
+            </div>
+
+            <!-- Tabs: Login vs Register -->
+            <div class="flex border-b border-slate-200 mb-6">
+                <button id="cust-tab-login-btn" onclick="switchCustAuthTab('login')" class="flex-1 py-3 text-center font-bold text-ocean-600 border-b-2 border-ocean-600 text-sm">
+                    เข้าสู่ระบบ (Login)
+                </button>
+                <button id="cust-tab-reg-btn" onclick="switchCustAuthTab('register')" class="flex-1 py-3 text-center font-bold text-slate-400 border-b-2 border-transparent text-sm hover:text-slate-600">
+                    สมัครสมาชิก (Register)
+                </button>
+            </div>
+
+            <!-- Customer Login Form -->
+            <div id="cust-form-login" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">อีเมลผู้ใช้งาน</label>
+                    <input type="email" id="cust-login-email" placeholder="name@example.com" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">รหัสผ่าน</label>
+                    <input type="password" id="cust-login-pass" placeholder="••••••••" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500 focus:outline-none">
+                </div>
+                <button onclick="submitCustomerLogin()" class="w-full py-3 bg-ocean-600 hover:bg-ocean-700 text-white font-bold rounded-xl text-sm shadow-md shadow-ocean-200 transition-all">
+                    เข้าสู่ระบบ
+                </button>
+            </div>
+
+            <!-- Customer Register Form (Page 2) -->
+            <div id="cust-form-register" class="hidden space-y-4">
+                <!-- Account Type Selector (Only Customer allowed, Merchant removed per red X) -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">เลือกประเภทบัญชีผู้ใช้:</label>
+                    <div class="border-2 border-ocean-600 bg-ocean-50 p-3 rounded-2xl text-center">
+                        <i class="fa-solid fa-user-tag text-2xl text-ocean-600 mb-1"></i>
+                        <div class="font-bold text-xs text-ocean-900">ลูกค้าทั่วไป</div>
+                        <div class="text-[10px] text-slate-500">สำหรับสั่งอาหารล่วงหน้า</div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">ชื่อ - นามสกุล *</label>
+                    <input type="text" id="cust-reg-name" placeholder="สมชาย ใจดี" class="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">เบอร์โทรศัพท์ติดต่อ *</label>
+                    <input type="tel" id="cust-reg-phone" placeholder="081-234-5678" class="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500 focus:outline-none">
+                </div>
+                <!-- Note Page 2: "ลบเลข 9 ออก" -> clean label without "9." -->
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">อีเมลสำหรับเข้าสู่ระบบ *</label>
+                    <input type="email" id="cust-reg-email" placeholder="user@domain.com" class="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">รหัสผ่าน *</label>
+                    <input type="password" id="cust-reg-pass" placeholder="••••••••" class="w-full px-4 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500 focus:outline-none">
+                </div>
+                <button onclick="submitCustomerRegister()" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm shadow-md transition-all">
+                    ยืนยันลงทะเบียนสมัครสมาชิก
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. OPERATOR (MERCHANT) AUTH MODAL (Page 7: ของใครของมัน) -->
+    <div id="modal-operator-auth" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl relative my-8">
+            <button onclick="closeOperatorAuthModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- Operator Header Tag -->
+            <div class="flex items-center gap-2 mb-4">
+                <span class="px-2.5 py-1 bg-amber-100 text-amber-800 font-bold text-xs rounded-lg flex items-center gap-1.5">
+                    <i class="fa-solid fa-shop"></i> ส่วนของผู้ประกอบการ (Operator)
+                </span>
+                <span class="text-xs text-slate-400">ระบบจัดการร้านค้า</span>
+            </div>
+
+            <div class="flex border-b border-slate-200 mb-6">
+                <button id="op-tab-login-btn" onclick="switchOpAuthTab('login')" class="flex-1 py-3 text-center font-bold text-amber-600 border-b-2 border-amber-600 text-sm">
+                    เข้าสู่ระบบร้านค้า
+                </button>
+                <button id="op-tab-reg-btn" onclick="switchOpAuthTab('register')" class="flex-1 py-3 text-center font-bold text-slate-400 border-b-2 border-transparent text-sm hover:text-slate-600">
+                    ลงทะเบียนร้านใหม่
+                </button>
+            </div>
+
+            <!-- Operator Login Form -->
+            <div id="op-form-login" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">อีเมลร้านค้า</label>
+                    <input type="email" id="op-login-email" placeholder="ocean@bites.com" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">รหัสผ่าน</label>
+                    <input type="password" id="op-login-pass" placeholder="••••••••" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+                </div>
+                <button onclick="submitOperatorLogin()" class="w-full py-3 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-sm shadow-md transition-all">
+                    เข้าสู่ระบบจัดการร้าน
+                </button>
+                <div class="pt-2 text-center">
+                    <button type="button" onclick="closeOperatorAuthModal(); switchToPortal('customer');" class="text-xs font-bold text-ocean-600 hover:underline inline-flex items-center gap-1.5">
+                        <i class="fa-solid fa-house"></i> กลับสู่หน้าหลัก (ลูกค้า)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Operator Detailed Register Form -->
+            <div id="op-form-register" class="hidden space-y-3 max-h-80 overflow-y-auto custom-scrollbar pr-1">
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-700 mb-0.5">1. ชื่อ-นามสกุล เจ้าของร้าน *</label>
+                    <input type="text" id="op-reg-owner" placeholder="นายวิชัย อร่อยดี" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
+                </div>
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-700 mb-0.5">2. ชื่อร้านค้า *</label>
+                    <input type="text" id="op-reg-shopname" placeholder="โอเชี่ยน ไบท์ส" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-700 mb-0.5">3. หมวดหมู่ *</label>
+                        <select id="op-reg-category" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs bg-white">
+                            <option>อาหารจานเดียว</option>
+                            <option>เครื่องดื่ม</option>
+                            <option>เบเกอรี่</option>
+                            <option>ทานเล่น</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-700 mb-0.5">4. เบอร์โทรร้าน *</label>
+                        <input type="tel" id="op-reg-phone" placeholder="02-999-8888" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-700 mb-0.5">5. จุดนัดรับอาหารหน้าร้าน *</label>
+                    <input type="text" id="op-reg-loc" placeholder="อาคาร A ชั้น 1 หน้าร้าน" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-700 mb-0.5">6. เวลาเปิด-ปิด *</label>
+                        <input type="text" id="op-reg-hours" placeholder="08:00 - 20:00 น." class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-700 mb-0.5">7. เลขประจำตัวผู้เสียภาษี</label>
+                        <input type="text" id="op-reg-tax" placeholder="1234567890123" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[11px] font-medium text-slate-700 mb-0.5">8. บัญชีธนาคารสำหรับรับยอดสรุป *</label>
+                    <input type="text" id="op-reg-bank" placeholder="กสิกรไทย 012-3-45678-9" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
+                </div>
+                <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-100">
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-700 mb-0.5">อีเมลเข้าสู่ระบบ *</label>
+                        <input type="email" id="op-reg-email" placeholder="ocean@bites.com" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-medium text-slate-700 mb-0.5">รหัสผ่าน *</label>
+                        <input type="password" id="op-reg-pass" placeholder="••••••••" class="w-full px-3 py-1.5 rounded-lg border border-slate-200 text-xs">
+                    </div>
+                </div>
+                <button onclick="submitOperatorRegister()" class="w-full py-2.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl text-xs shadow-md mt-2">
+                    ส่งข้อมูลเปิดร้านค้า
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. ADMIN AUTH MODAL (Page 6 & 7: ของใครของมัน) -->
+    <div id="modal-admin-auth" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl relative">
+            <button onclick="closeAdminAuthModal()" class="absolute top-5 right-5 text-slate-400 hover:text-slate-600 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+
+            <!-- Admin Tag -->
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 mx-auto rounded-2xl bg-purple-50 text-purple-700 flex items-center justify-center text-2xl mb-3 border border-purple-100">
+                    <i class="fa-solid fa-user-shield"></i>
+                </div>
+                <span class="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-full">ส่วนของผู้ดูแลระบบ (Backend Admin)</span>
+                <h3 class="text-xl font-bold text-slate-800 mt-2">เข้าสู่ระบบแอดมิน</h3>
+                <p class="text-xs text-slate-400">ควบคุมระบบภาพรวมและอนุมัติร้านค้า</p>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">อีเมลผู้ดูแลระบบ</label>
+                    <input type="email" id="admin-login-email" placeholder="admin@demo.com" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">รหัสผ่าน</label>
+                    <input type="password" id="admin-login-pass" placeholder="••••••••" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                </div>
+                <button onclick="submitAdminLogin()" class="w-full py-3 bg-purple-700 hover:bg-purple-800 text-white font-bold rounded-xl text-sm shadow-md shadow-purple-200 transition-all">
+                    เข้าสู่ระบบแอดมิน
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL 4: CART & CHECKOUT SLIDE-OVER (Page 3)             -->
+    <!-- ======================================================== -->
+    <div id="modal-cart" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex justify-end">
+        <div class="bg-white max-w-md w-full h-full p-6 flex flex-col justify-between shadow-2xl relative">
+            <div>
+                <div class="flex justify-between items-center border-b border-slate-100 pb-4 mb-4">
+                    <h3 class="font-bold text-lg text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-basket-shopping text-ocean-600"></i> ตระกร้าคำสั่งซื้อ
+                    </h3>
+                    <button onclick="closeCartModal()" class="text-slate-400 hover:text-slate-600 p-1">
+                        <i class="fa-solid fa-xmark text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Cash Payment Notice Badge (Page 3) -->
+                <div class="bg-emerald-50 border border-emerald-200 text-emerald-800 p-3 rounded-xl text-xs flex items-center gap-2.5 mb-4">
+                    <i class="fa-solid fa-money-bill-wave text-emerald-600 text-xl"></i>
+                    <div>
+                        <span class="font-bold">ชำระเงินสดหน้าร้านเท่านั้น:</span>
+                        <p class="text-[11px] text-emerald-700">ไม่ต้องโอนเงินออนไลน์ รับอาหารพร้อมจ่ายเงินสดกับพนักงาน</p>
+                    </div>
+                </div>
+
+                <!-- Cart Items List Container -->
+                <div id="cart-items-container" class="space-y-3 max-h-[35vh] overflow-y-auto custom-scrollbar pr-1">
+                    <!-- Dynamic Cart Items -->
+                </div>
+            </div>
+
+            <!-- Checkout Details Form (Page 3) -->
+            <div class="border-t border-slate-100 pt-4 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">เวลานัดรับอาหารล่วงหน้า *</label>
+                    <input type="time" id="checkout-pickup-time" class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-ocean-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">หมายเหตุเพิ่มเติมถึงร้านค้า</label>
+                    <input type="text" id="checkout-note" placeholder="เช่น ใส่กล่อง / ไม่เผ็ด / แยกน้ำซุป..." class="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-ocean-500">
+                </div>
+
+                <!-- Summary Total Price -->
+                <div class="flex justify-between items-center pt-2 border-t border-slate-100">
+                    <span class="text-sm font-medium text-slate-600">ยอดรวมสุทธิ (จ่ายเงินสด):</span>
+                    <span id="cart-total-price" class="text-2xl font-extrabold text-ocean-600">฿0</span>
+                </div>
+
+                <!-- Confirm Pre-Order Button (Page 4: เมื่อกดยืนยันการสั่งซื้อล่วงหน้า จะเข้าสู่หน้าติดตามคำสั่งซื้อล่วงหน้า) -->
+                <button onclick="handleCheckoutOrder()" class="w-full py-3.5 bg-ocean-600 hover:bg-ocean-700 text-white font-bold rounded-xl text-base shadow-lg shadow-ocean-200 transition-all flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-check-circle"></i> ยืนยันการสั่งซื้อล่วงหน้า
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- MODAL 5: MERCHANT ADD MENU MODAL                         -->
+    <!-- ======================================================== -->
+    <div id="modal-menu" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl relative">
+            <button onclick="closeMenuModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+            <h3 class="text-lg font-bold text-slate-800 mb-4" id="modal-menu-title">เพิ่มเมนูอาหารใหม่</h3>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">ชื่อเมนูอาหาร *</label>
+                    <input type="text" id="menu-form-name" placeholder="ข้าวผัดทะเลต้มยำ" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">ราคา (บาท) *</label>
+                        <input type="number" id="menu-form-price" placeholder="95" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-700 mb-1">เวลาเตรียม (นาที) *</label>
+                        <input type="number" id="menu-form-time" placeholder="15" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">หมวดหมู่อาหาร *</label>
+                    <select id="menu-form-category" class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500 bg-white">
+                        <option value="อาหารจานเดียว">อาหารจานเดียว</option>
+                        <option value="เครื่องดื่ม">เครื่องดื่ม</option>
+                        <option value="เบเกอรี่">เบเกอรี่</option>
+                        <option value="ทานเล่น">ทานเล่น</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-700 mb-1">รูปภาพ URL</label>
+                    <input type="text" id="menu-form-img" placeholder="https://..." class="w-full px-3 py-2 rounded-xl border border-slate-200 text-sm focus:ring-2 focus:ring-ocean-500">
+                </div>
+                <button onclick="saveMenuModal()" class="w-full py-3 bg-ocean-600 hover:bg-ocean-700 text-white font-bold rounded-xl text-sm shadow-md mt-2">
+                    บันทึกเมนูอาหาร
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT APPLICATION CORE -->
+    <script>
+        // Core State
+        const state = {
+            currentPortal: 'customer', // 'customer' | 'operator' | 'admin'
+            customerTab: 'browse',      // 'browse' | 'tracking'
+            currentUser: null,         // Logged-in user in active portal
+            selectedCategory: 'ทั้งหมด',
+            searchQuery: '',
+            cart: [],
+            
+            // Menu Database
+            menus: [
+                { id: 'M1', shopId: 'S1', shopName: 'Ocean Bites (โอเชี่ยน ไบท์ส)', name: 'ข้าวผัดซีฟู้ดต้มยำแห้ง', category: 'อาหารจานเดียว', price: 95, time: 15, isAvailable: true, img: 'https://images.unsplash.com/photo-1559847844-5315695dadae?w=500&auto=format&fit=crop&q=60' },
+                { id: 'M2', shopId: 'S1', shopName: 'Ocean Bites (โอเชี่ยน ไบท์ส)', name: 'สเต๊กปลากะพงซอสซัลซ่า', category: 'อาหารจานเดียว', price: 189, time: 20, isAvailable: true, img: 'https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?w=500&auto=format&fit=crop&q=60' },
+                { id: 'M3', shopId: 'S1', shopName: 'Ocean Bites (โอเชี่ยน ไบท์ส)', name: 'บลูฮาวายโซดาเย็น', category: 'เครื่องดื่ม', price: 55, time: 5, isAvailable: true, img: 'https://images.unsplash.com/photo-1513558161293-cdaf765ed2fd?w=500&auto=format&fit=crop&q=60' },
+                { id: 'M4', shopId: 'S2', shopName: 'Blue Wave Cafe', name: 'บลูเบอร์รี่ชีสพาย', category: 'เบเกอรี่', price: 85, time: 5, isAvailable: true, img: 'https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=500&auto=format&fit=crop&q=60' },
+                { id: 'M5', shopId: 'S2', shopName: 'Blue Wave Cafe', name: 'เฟรนช์ฟรายส์ซอสชีส', category: 'ทานเล่น', price: 69, time: 10, isAvailable: true, img: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500&auto=format&fit=crop&q=60' }
+            ],
+
+            // Active Orders Database (Page 4 & 5)
+            orders: [
+                {
+                    id: 'FPO-3410',
+                    userId: 'U1',
+                    customerName: 'สมชาย ใจดี',
+                    customerPhone: '081-234-5678',
+                    shopName: 'Ocean Bites (โอเชี่ยน ไบท์ส)',
+                    shopLocation: 'จุดนัดรับอาหารหน้าร้าน',
+                    items: [{ name: 'ข้าวผัดซีฟู้ดต้มยำแห้ง', price: 95, qty: 1 }],
+                    totalPrice: 95,
+                    pickupTime: '21:30 น.',
+                    note: 'ใส่กล่อง',
+                    status: 'PENDING'
+                },
+                {
+                    id: 'FPO-1092',
+                    userId: 'U1',
+                    customerName: 'สมชาย ใจดี',
+                    customerPhone: '081-234-5678',
+                    shopName: 'Ocean Bites (โอเชี่ยน ไบท์ส)',
+                    shopLocation: 'อาคาร A ชั้น 1 หน้าร้าน',
+                    items: [{ name: 'ข้าวผัดซีฟู้ดต้มยำแห้ง', price: 95, qty: 2 }],
+                    totalPrice: 190,
+                    pickupTime: '12:30 น.',
+                    note: 'ขอเผ็ดน้อยครับ',
+                    status: 'COOKING'
+                }
+            ],
+
+            // Registered Merchants (Page 6)
+            merchants: [
+                {
+                    id: 'S1',
+                    ownerName: 'นายวิชัย อร่อยดี',
+                    shopName: 'Ocean Bites (โอเชี่ยน ไบท์ส)',
+                    category: 'อาหารจานเดียว',
+                    phone: '02-999-8888',
+                    email: 'ocean@bites.com',
+                    location: 'อาคาร A ชั้น 1 หน้าร้าน',
+                    hours: '08:00 - 20:00 น.',
+                    taxId: '1234567890123',
+                    bank: 'กสิกรไทย 012-3-45678-9',
+                    status: 'APPROVED'
+                },
+                {
+                    id: 'S2',
+                    ownerName: 'นางสาวสุดา ฟ้าใส',
+                    shopName: 'Blue Wave Cafe',
+                    category: 'เครื่องดื่ม',
+                    phone: '089-111-2222',
+                    email: 'wave@cafe.com',
+                    location: 'โซน B ติดสวนน้ำ',
+                    hours: '09:00 - 18:00 น.',
+                    taxId: '9876543210987',
+                    bank: 'ไทยพาณิชย์ 987-6-54321-0',
+                    status: 'PENDING'
+                }
+            ]
+        };
+
+        let opSalesChart = null;
+        let opTopChart = null;
+        let adminChart = null;
+
+        // Init App
+        window.onload = function () {
+            switchToPortal('customer');
+            renderCategoryPills();
+            renderFoodGrid();
+            renderOrderTracking();
+            updateCartBadge();
+        };
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgClass = type === 'error' ? 'bg-rose-600' : type === 'success' ? 'bg-emerald-600' : 'bg-ocean-600';
+            const icon = type === 'error' ? 'fa-circle-exclamation' : type === 'success' ? 'fa-circle-check' : 'fa-bell';
+            toast.className = `${bgClass} text-white px-4 py-3 rounded-2xl shadow-xl flex items-center gap-3 text-sm pointer-events-auto transition-all transform translate-y-2 opacity-0 duration-300`;
+            toast.innerHTML = `<i class="fa-solid ${icon} text-lg"></i><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
+            setTimeout(() => {
+                toast.classList.add('opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3500);
+        }
+
+        // Switch Portal Role (Customer vs Operator vs Admin)
+        function switchToPortal(portal) {
+            state.currentPortal = portal;
+
+            // Navbars
+            document.getElementById('nav-customer').classList.toggle('hidden', portal !== 'customer');
+            document.getElementById('nav-operator').classList.toggle('hidden', portal !== 'operator');
+            document.getElementById('nav-admin').classList.toggle('hidden', portal !== 'admin');
+
+            // Cart icon: Only in customer portal
+            document.getElementById('header-cart-btn').classList.toggle('hidden', portal !== 'customer');
+
+            // Views
+            document.getElementById('view-customer-browse').classList.add('hidden');
+            document.getElementById('view-customer-tracking').classList.add('hidden');
+            document.getElementById('view-operator').classList.add('hidden');
+            document.getElementById('view-admin').classList.add('hidden');
+
+            // Logo Branding
+            const logoIcon = document.getElementById('logo-icon');
+            const logoBox = document.getElementById('logo-icon-box');
+            const logoSub = document.getElementById('logo-subtext');
+
+            if (portal === 'customer') {
+                logoIcon.className = 'fa-solid font-bold fa-utensils text-xl';
+                logoBox.className = 'w-10 h-10 rounded-xl bg-gradient-to-tr from-ocean-600 to-ocean-400 flex items-center justify-center text-white shadow-md shadow-ocean-200';
+                logoSub.textContent = 'Ocean Blue Express';
+                switchCustomerTab(state.customerTab);
+            } else if (portal === 'operator') {
+                logoIcon.className = 'fa-solid font-bold fa-shop text-xl';
+                logoBox.className = 'w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-400 flex items-center justify-center text-white shadow-md shadow-amber-200';
+                logoSub.textContent = 'Operator Console';
+                document.getElementById('view-operator').classList.remove('hidden');
+                renderMerchantDashboard();
+            } else if (portal === 'admin') {
+                logoIcon.className = 'fa-solid font-bold fa-user-shield text-xl';
+                logoBox.className = 'w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-700 to-ocean-600 flex items-center justify-center text-white shadow-md shadow-purple-200';
+                logoSub.textContent = 'Backend Administration';
+                document.getElementById('view-admin').classList.remove('hidden');
+                renderAdminDashboard();
+            }
+
+            renderAuthHeader();
+        }
+
+        function handleLogoClick() {
+            if (state.currentPortal === 'customer') {
+                switchCustomerTab('browse');
+            }
+        }
+
+        function switchCustomerTab(tab) {
+            state.customerTab = tab;
+            const browseView = document.getElementById('view-customer-browse');
+            const trackingView = document.getElementById('view-customer-tracking');
+            const browseBtn = document.getElementById('nav-browse');
+            const trackingBtn = document.getElementById('nav-tracking');
+
+            if (tab === 'browse') {
+                browseView.classList.remove('hidden');
+                trackingView.classList.add('hidden');
+                browseBtn.className = 'px-4 py-2 rounded-lg text-sm font-medium transition-all text-ocean-600 bg-ocean-50';
+                trackingBtn.className = 'px-4 py-2 rounded-lg text-sm font-medium transition-all text-slate-600 hover:text-ocean-600 hover:bg-slate-50';
+            } else {
+                browseView.classList.add('hidden');
+                trackingView.classList.remove('hidden');
+                trackingBtn.className = 'px-4 py-2 rounded-lg text-sm font-medium transition-all text-ocean-600 bg-ocean-50';
+                browseBtn.className = 'px-4 py-2 rounded-lg text-sm font-medium transition-all text-slate-600 hover:text-ocean-600 hover:bg-slate-50';
+                renderOrderTracking();
+            }
+        }
+
+        // Render Auth Button per Portal (Page 1 & 7)
+        function renderAuthHeader() {
+            const area = document.getElementById('auth-area');
+            const user = state.currentUser;
+
+            if (state.currentPortal === 'customer') {
+                if (user && user.role === 'customer') {
+                    area.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="text-right hidden sm:block">
+                                <div class="font-bold text-xs text-slate-800">${user.name}</div>
+                                <span class="text-[10px] px-2 py-0.5 bg-ocean-100 text-ocean-700 font-semibold rounded-full">ลูกค้า</span>
+                            </div>
+                            <button onclick="logoutCustomer()" class="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50" title="ออกจากระบบ">
+                                <i class="fa-solid fa-arrow-right-from-bracket text-lg"></i>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    // Page 1 Note: "กดเข้า เฉพาะ Customer เท่านั้น"
+                    area.innerHTML = `
+                        <button onclick="openCustomerAuthModal('login')" class="px-4 py-2 bg-ocean-600 hover:bg-ocean-700 text-white font-medium text-sm rounded-xl shadow-md shadow-ocean-200 transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-user"></i> เข้าสู่ระบบ / สมัครสมาชิก
+                        </button>
+                    `;
+                }
+            } else if (state.currentPortal === 'operator') {
+                if (user && user.role === 'operator') {
+                    area.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="text-right hidden sm:block">
+                                <div class="font-bold text-xs text-slate-800">${user.shopName}</div>
+                                <span class="text-[10px] px-2 py-0.5 bg-amber-100 text-amber-800 font-semibold rounded-full">ผู้ประกอบการ</span>
+                            </div>
+                            <button onclick="logoutOperator()" class="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50" title="ออกจากระบบร้านค้า">
+                                <i class="fa-solid fa-arrow-right-from-bracket text-lg"></i>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    area.innerHTML = `
+                        <button onclick="openOperatorAuthModal('login')" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-medium text-sm rounded-xl shadow-md transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-shop"></i> เข้าสู่ระบบร้านค้า
+                        </button>
+                    `;
+                }
+            } else if (state.currentPortal === 'admin') {
+                if (user && user.role === 'admin') {
+                    area.innerHTML = `
+                        <div class="flex items-center gap-3">
+                            <div class="text-right hidden sm:block">
+                                <div class="font-bold text-xs text-slate-800">${user.name}</div>
+                                <span class="text-[10px] px-2 py-0.5 bg-purple-100 text-purple-700 font-semibold rounded-full">System Admin</span>
+                            </div>
+                            <button onclick="logoutAdmin()" class="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50" title="ออกจากระบบแอดมิน">
+                                <i class="fa-solid fa-arrow-right-from-bracket text-lg"></i>
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    area.innerHTML = `
+                        <button onclick="openAdminAuthModal()" class="px-4 py-2 bg-purple-700 hover:bg-purple-800 text-white font-medium text-sm rounded-xl shadow-md transition-all flex items-center gap-2">
+                            <i class="fa-solid fa-lock"></i> เข้าสู่ระบบแอดมิน
+                        </button>
+                    `;
+                }
+            }
+        }
+
+        // ==============================================
+        // 1. CUSTOMER AUTH LOGIC (Page 1 & 2)
+        // ==============================================
+        function openCustomerAuthModal(tab = 'login') {
+            switchCustAuthTab(tab);
+            document.getElementById('modal-customer-auth').classList.remove('hidden');
+        }
+        function closeCustomerAuthModal() {
+            document.getElementById('modal-customer-auth').classList.add('hidden');
+        }
+        function switchCustAuthTab(tab) {
+            const loginBtn = document.getElementById('cust-tab-login-btn');
+            const regBtn = document.getElementById('cust-tab-reg-btn');
+            const loginForm = document.getElementById('cust-form-login');
+            const regForm = document.getElementById('cust-form-register');
+
+            if (tab === 'login') {
+                loginBtn.className = 'flex-1 py-3 text-center font-bold text-ocean-600 border-b-2 border-ocean-600 text-sm';
+                regBtn.className = 'flex-1 py-3 text-center font-bold text-slate-400 border-b-2 border-transparent text-sm hover:text-slate-600';
+                loginForm.classList.remove('hidden');
+                regForm.classList.add('hidden');
+            } else {
+                regBtn.className = 'flex-1 py-3 text-center font-bold text-ocean-600 border-b-2 border-ocean-600 text-sm';
+                loginBtn.className = 'flex-1 py-3 text-center font-bold text-slate-400 border-b-2 border-transparent text-sm hover:text-slate-600';
+                regForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+            }
+        }
+        function quickFillCustomer() {
+            document.getElementById('cust-login-email').value = 'somchai@demo.com';
+            document.getElementById('cust-login-pass').value = 'password123';
+        }
+        function submitCustomerLogin() {
+            const email = document.getElementById('cust-login-email').value.trim();
+            if (!email) {
+                showToast('กรุณากรอกอีเมลสำหรับเข้าสู่ระบบ', 'error');
+                return;
+            }
+            state.currentUser = { id: 'U1', name: 'สมชาย ใจดี', email: email, role: 'customer' };
+            renderAuthHeader();
+            closeCustomerAuthModal();
+            showToast(`ยินดีต้อนรับคุณ ${state.currentUser.name} เข้าสู่ระบบ!`, 'success');
+        }
+        function submitCustomerRegister() {
+            const name = document.getElementById('cust-reg-name').value.trim();
+            const phone = document.getElementById('cust-reg-phone').value.trim();
+            const email = document.getElementById('cust-reg-email').value.trim();
+            const pass = document.getElementById('cust-reg-pass').value.trim();
+
+            if (!name || !phone || !email || !pass) {
+                showToast('กรุณากรอกข้อมูลให้ครบถ้วนทุกช่องที่มี *', 'error');
+                return;
+            }
+
+            state.currentUser = { id: 'U-' + Date.now().toString().slice(-4), name, phone, email, role: 'customer' };
+            renderAuthHeader();
+            closeCustomerAuthModal();
+            showToast('ลงทะเบียนสมัครสมาชิกสำเร็จแล้ว!', 'success');
+        }
+        function logoutCustomer() {
+            state.currentUser = null;
+            renderAuthHeader();
+            showToast('ออกจากระบบลูกค้าเรียบร้อยแล้ว');
+        }
+
+        // ==============================================
+        // 2. OPERATOR AUTH LOGIC (Page 5 & 7)
+        // ==============================================
+        function openOperatorAuthModal(tab = 'login') {
+            switchOpAuthTab(tab);
+            document.getElementById('modal-operator-auth').classList.remove('hidden');
+        }
+        function closeOperatorAuthModal() {
+            document.getElementById('modal-operator-auth').classList.add('hidden');
+        }
+        function switchOpAuthTab(tab) {
+            const loginBtn = document.getElementById('op-tab-login-btn');
+            const regBtn = document.getElementById('op-tab-reg-btn');
+            const loginForm = document.getElementById('op-form-login');
+            const regForm = document.getElementById('op-form-register');
+
+            if (tab === 'login') {
+                loginBtn.className = 'flex-1 py-3 text-center font-bold text-amber-600 border-b-2 border-amber-600 text-sm';
+                regBtn.className = 'flex-1 py-3 text-center font-bold text-slate-400 border-b-2 border-transparent text-sm hover:text-slate-600';
+                loginForm.classList.remove('hidden');
+                regForm.classList.add('hidden');
+            } else {
+                regBtn.className = 'flex-1 py-3 text-center font-bold text-amber-600 border-b-2 border-amber-600 text-sm';
+                loginBtn.className = 'flex-1 py-3 text-center font-bold text-slate-400 border-b-2 border-transparent text-sm hover:text-slate-600';
+                regForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+            }
+        }
+        function quickFillOperator() {
+            document.getElementById('op-login-email').value = 'ocean@bites.com';
+            document.getElementById('op-login-pass').value = 'password123';
+        }
+        function submitOperatorLogin() {
+            const email = document.getElementById('op-login-email').value.trim();
+            if (!email) {
+                showToast('กรุณากรอกอีเมลร้านค้า', 'error');
+                return;
+            }
+            state.currentUser = { id: 'S1', name: 'นายวิชัย อร่อยดี', shopName: 'Ocean Bites (โอเชี่ยน ไบท์ส)', role: 'operator' };
+            renderAuthHeader();
+            closeOperatorAuthModal();
+            renderMerchantDashboard();
+            showToast(`เข้าสู่ระบบร้านค้า ${state.currentUser.shopName} สำเร็จ!`, 'success');
+        }
+        function submitOperatorRegister() {
+            const owner = document.getElementById('op-reg-owner').value.trim();
+            const shop = document.getElementById('op-reg-shopname').value.trim();
+            const phone = document.getElementById('op-reg-phone').value.trim();
+            const loc = document.getElementById('op-reg-loc').value.trim();
+            const bank = document.getElementById('op-reg-bank').value.trim();
+            const email = document.getElementById('op-reg-email').value.trim();
+            const pass = document.getElementById('op-reg-pass').value.trim();
+
+            if (!owner || !shop || !phone || !loc || !bank || !email || !pass) {
+                showToast('กรุณากรอกข้อมูลผู้ประกอบการให้ครบถ้วนทุกช่องที่มี *', 'error');
+                return;
+            }
+
+            const newMerch = {
+                id: 'S-' + Date.now().toString().slice(-4),
+                ownerName: owner,
+                shopName: shop,
+                category: document.getElementById('op-reg-category').value,
+                phone,
+                email,
+                location: loc,
+                hours: document.getElementById('op-reg-hours').value || '08:00 - 20:00 น.',
+                taxId: document.getElementById('op-reg-tax').value || 'ไม่ระบุ',
+                bank,
+                status: 'PENDING'
+            };
+            state.merchants.push(newMerch);
+            state.currentUser = { id: newMerch.id, name: owner, shopName: shop, role: 'operator' };
+
+            renderAuthHeader();
+            closeOperatorAuthModal();
+            renderMerchantDashboard();
+            showToast('ลงทะเบียนร้านค้าสำเร็จ! ส่งข้อมูลให้แอดมินตรวจสอบแล้ว', 'success');
+        }
+        function logoutOperator() {
+            state.currentUser = null;
+            renderAuthHeader();
+            showToast('ออกจากระบบร้านค้าเรียบร้อยแล้ว');
+        }
+
+        // ==============================================
+        // 3. ADMIN AUTH LOGIC (Page 6 & 7)
+        // ==============================================
+        function openAdminAuthModal() {
+            document.getElementById('modal-admin-auth').classList.remove('hidden');
+        }
+        function closeAdminAuthModal() {
+            document.getElementById('modal-admin-auth').classList.add('hidden');
+        }
+        function quickFillAdmin() {
+            document.getElementById('admin-login-email').value = 'admin@demo.com';
+            document.getElementById('admin-login-pass').value = 'password123';
+        }
+        function submitAdminLogin() {
+            const email = document.getElementById('admin-login-email').value.trim();
+            if (!email) {
+                showToast('กรุณากรอกอีเมลแอดมิน', 'error');
+                return;
+            }
+            state.currentUser = { id: 'ADM', name: 'ผู้ดูแลระบบสูงสุด', role: 'admin' };
+            renderAuthHeader();
+            closeAdminAuthModal();
+            renderAdminDashboard();
+            showToast('เข้าสู่ระบบผู้ดูแลระบบสำเร็จ!', 'success');
+        }
+        function logoutAdmin() {
+            state.currentUser = null;
+            renderAuthHeader();
+            showToast('ออกจากระบบแอดมินเรียบร้อยแล้ว');
+        }
+
+        // ==============================================
+        // FOOD BROWSING & SEARCH
+        // ==============================================
+        function renderCategoryPills() {
+            const categories = ['ทั้งหมด', 'อาหารจานเดียว', 'เครื่องดื่ม', 'เบเกอรี่', 'ทานเล่น'];
+            const container = document.getElementById('category-pills');
+            container.innerHTML = categories.map(cat => {
+                const isActive = state.selectedCategory === cat;
+                const activeClass = isActive 
+                    ? 'bg-ocean-600 text-white font-bold shadow-md shadow-ocean-200' 
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200 font-medium';
+                return `<button onclick="setCategory('${cat}')" class="px-3.5 py-1.5 rounded-xl text-xs whitespace-nowrap transition-all ${activeClass}">${cat}</button>`;
+            }).join('');
+        }
+
+        function setCategory(cat) {
+            state.selectedCategory = cat;
+            renderCategoryPills();
+            renderFoodGrid();
+        }
+
+        function handleSearch() {
+            state.searchQuery = document.getElementById('search-input').value.toLowerCase();
+            renderFoodGrid();
+        }
+
+        function renderFoodGrid() {
+            const grid = document.getElementById('food-grid');
+            const countLabel = document.getElementById('menu-count');
+
+            const filtered = state.menus.filter(item => {
+                const matchCategory = state.selectedCategory === 'ทั้งหมด' || item.category === state.selectedCategory;
+                const matchSearch = item.name.toLowerCase().includes(state.searchQuery) || item.shopName.toLowerCase().includes(state.searchQuery);
+                return matchCategory && matchSearch;
+            });
+
+            countLabel.textContent = `กำลังแสดง ${filtered.length} เมนู`;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full text-center py-12 bg-white rounded-2xl border border-slate-200">
+                        <i class="fa-solid fa-utensils text-4xl text-slate-300 mb-2"></i>
+                        <p class="text-slate-500 font-medium">ไม่พบเมนูอาหารที่ตรงกับคำค้นหา</p>
+                    </div>
+                `;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(item => `
+                <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg transition-all overflow-hidden flex flex-col justify-between group">
+                    <div>
+                        <div class="relative h-44 overflow-hidden bg-slate-100">
+                            <img src="${item.img}" alt="${item.name}" class="w-full h-full object-cover group-hover:scale-105 transition-all duration-300" onerror="this.src='https://placehold.co/400x300/2563eb/ffffff?text=FoodPreOrder'">
+                            <span class="absolute top-3 left-3 bg-white/90 backdrop-blur-md text-ocean-700 text-[10px] font-bold px-2.5 py-1 rounded-full shadow-sm">
+                                ${item.category}
+                            </span>
+                            <span class="absolute bottom-3 right-3 bg-slate-900/80 text-white text-[10px] font-medium px-2 py-0.5 rounded-md backdrop-blur-sm">
+                                <i class="fa-regular fa-clock text-amber-400 mr-1"></i>~${item.time} นาที
+                            </span>
+                        </div>
+                        <div class="p-4 space-y-1">
+                            <div class="text-[11px] font-semibold text-ocean-600">${item.shopName}</div>
+                            <h3 class="font-bold text-slate-800 text-base line-clamp-1">${item.name}</h3>
+                        </div>
+                    </div>
+                    <div class="p-4 pt-0 flex justify-between items-center border-t border-slate-50 mt-2">
+                        <div>
+                            <span class="text-xs text-slate-400">ราคา</span>
+                            <div class="text-lg font-extrabold text-slate-800">฿${item.price}</div>
+                        </div>
+                        <button onclick="addToCart('${item.id}')" class="px-3.5 py-2 bg-ocean-600 hover:bg-ocean-700 text-white font-medium rounded-xl text-xs shadow-md shadow-ocean-200 transition-all flex items-center gap-1.5">
+                            <i class="fa-solid fa-cart-plus"></i>เพิ่มลงตะกร้า
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ==============================================
+        // CART LOGIC (Page 1 & 3)
+        // ==============================================
+        function addToCart(menuId) {
+            // Require login
+            if (!state.currentUser || state.currentUser.role !== 'customer') {
+                showToast('กรุณาเข้าสู่ระบบลูกค้าก่อนทำการสั่งอาหาร', 'error');
+                openCustomerAuthModal('login');
+                return;
+            }
+
+            const item = state.menus.find(m => m.id === menuId);
+            if (!item) return;
+
+            const existing = state.cart.find(c => c.id === menuId);
+            if (existing) {
+                existing.qty += 1;
+            } else {
+                state.cart.push({ ...item, qty: 1 });
+            }
+
+            updateCartBadge();
+            showToast(`เพิ่ม "${item.name}" ลงในตะกร้าแล้ว`, 'success');
+        }
+
+        function updateCartBadge() {
+            const badge = document.getElementById('cart-count-badge');
+            const total = state.cart.reduce((s, i) => s + i.qty, 0);
+            badge.textContent = total;
+        }
+
+        function openCartModal() {
+            renderCartItems();
+            document.getElementById('modal-cart').classList.remove('hidden');
+        }
+        function closeCartModal() {
+            document.getElementById('modal-cart').classList.add('hidden');
+        }
+
+        function renderCartItems() {
+            const container = document.getElementById('cart-items-container');
+            const totalEl = document.getElementById('cart-total-price');
+
+            if (state.cart.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-slate-400">
+                        <i class="fa-solid fa-basket-shopping text-3xl mb-2"></i>
+                        <p class="text-xs">ยังไม่มีรายการอาหารในตะกร้า</p>
+                    </div>
+                `;
+                totalEl.textContent = '฿0';
+                return;
+            }
+
+            let grand = 0;
+            container.innerHTML = state.cart.map(item => {
+                const total = item.price * item.qty;
+                grand += total;
+                return `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 rounded-2xl border border-slate-200">
+                        <div class="flex-1 pr-2">
+                            <h4 class="font-bold text-xs text-slate-800">${item.name}</h4>
+                            <p class="text-[10px] text-slate-500">${item.shopName}</p>
+                            <span class="text-xs font-semibold text-ocean-600">฿${item.price}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="changeQty('${item.id}', -1)" class="w-6 h-6 rounded-lg bg-white border border-slate-200 text-xs font-bold hover:bg-slate-100 flex items-center justify-center">-</button>
+                            <span class="text-xs font-bold w-4 text-center">${item.qty}</span>
+                            <button onclick="changeQty('${item.id}', 1)" class="w-6 h-6 rounded-lg bg-white border border-slate-200 text-xs font-bold hover:bg-slate-100 flex items-center justify-center">+</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            totalEl.textContent = `฿${grand}`;
+        }
+
+        function changeQty(id, delta) {
+            const idx = state.cart.findIndex(c => c.id === id);
+            if (idx > -1) {
+                state.cart[idx].qty += delta;
+                if (state.cart[idx].qty <= 0) state.cart.splice(idx, 1);
+            }
+            updateCartBadge();
+            renderCartItems();
+        }
+
+        // Checkout Action (Page 4: เมื่อกด ยืนยันการสั่งซื้อล่วงหน้า จะเข้าสู่หน้า ติดตามคำสั่งซื้อล่วงหน้า)
+        function handleCheckoutOrder() {
+            if (!state.currentUser || state.currentUser.role !== 'customer') {
+                showToast('กรุณาเข้าสู่ระบบก่อนทำการสั่งอาหาร', 'error');
+                closeCartModal();
+                openCustomerAuthModal('login');
+                return;
+            }
+
+            if (state.cart.length === 0) {
+                showToast('ตะกร้าของคุณยังไม่มีรายการอาหาร', 'error');
+                return;
+            }
+
+            const pickupTime = document.getElementById('checkout-pickup-time').value;
+            if (!pickupTime) {
+                showToast('กรุณาระบุเวลานัดรับอาหารล่วงหน้า', 'error');
+                return;
+            }
+
+            const note = document.getElementById('checkout-note').value;
+            const grandTotal = state.cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+            const newOrder = {
+                id: 'FPO-' + Math.floor(1000 + Math.random() * 9000),
+                userId: state.currentUser.id,
+                customerName: state.currentUser.name,
+                customerPhone: state.currentUser.phone || '081-234-5678',
+                shopName: state.cart[0].shopName,
+                shopLocation: 'จุดนัดรับอาหารหน้าร้าน',
+                items: [...state.cart],
+                totalPrice: grandTotal,
+                pickupTime: pickupTime + ' น.',
+                note: note || 'ไม่มี',
+                status: 'PENDING'
+            };
+
+            state.orders.unshift(newOrder);
+            state.cart = [];
+            updateCartBadge();
+            closeCartModal();
+
+            showToast('สั่งซื้อล่วงหน้าสำเร็จ! ชำระเงินสดเมื่อรับสินค้า', 'success');
+            // Transition directly to Order Tracking view (Page 4)
+            switchCustomerTab('tracking');
+        }
+
+        // ==============================================
+        // ORDER TRACKING VIEW (Page 4)
+        // ==============================================
+        function renderOrderTracking() {
+            const container = document.getElementById('tracking-container');
+            const activeBadge = document.getElementById('active-order-badge');
+
+            const pendingOrders = state.orders.filter(o => o.status !== 'COMPLETED');
+            activeBadge.textContent = pendingOrders.length;
+            activeBadge.classList.toggle('hidden', pendingOrders.length === 0);
+
+            if (state.orders.length === 0) {
+                container.innerHTML = `
+                    <div class="bg-white p-12 rounded-3xl border border-slate-200 text-center">
+                        <i class="fa-solid fa-clock-rotate-left text-4xl text-slate-300 mb-3"></i>
+                        <h3 class="text-base font-bold text-slate-700">ยังไม่มีประวัติการสั่งอาหาร</h3>
+                        <p class="text-xs text-slate-400 mt-1">เลือกสั่งอาหารล่วงหน้าจากร้านโปรดเพื่อรับอาหารตามเวลาที่ต้องการ</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const steps = [
+                { key: 'PENDING', title: 'รอร้านค้ารับออเดอร์', icon: 'fa-receipt' },
+                { key: 'COOKING', title: 'กำลังปรุงอาหาร', icon: 'fa-fire-burner' },
+                { key: 'READY', title: 'พร้อมรับอาหารหน้าร้าน', icon: 'fa-bag-shopping' },
+                { key: 'COMPLETED', title: 'รับสินค้าเรียบร้อย', icon: 'fa-circle-check' }
+            ];
+
+            container.innerHTML = state.orders.map(order => {
+                const currentStepIdx = steps.findIndex(s => s.key === order.status);
+
+                return `
+                    <div class="bg-white rounded-3xl border border-slate-200 shadow-sm p-6 space-y-6">
+                        <div class="flex flex-col sm:flex-row justify-between sm:items-center gap-2 border-b border-slate-100 pb-4">
+                            <div>
+                                <span class="px-2.5 py-1 bg-ocean-100 text-ocean-700 font-bold text-xs rounded-md">ออเดอร์ #${order.id}</span>
+                                <h3 class="font-bold text-lg text-slate-800 mt-1">${order.shopName}</h3>
+                                <p class="text-xs text-slate-500"><i class="fa-solid fa-location-dot text-rose-500 mr-1"></i>${order.shopLocation}</p>
+                            </div>
+                            <div class="sm:text-right">
+                                <span class="text-xs text-slate-400">เวลานัดรับสินค้า</span>
+                                <div class="text-xl font-extrabold text-ocean-600"><i class="fa-regular fa-clock mr-1"></i>${order.pickupTime}</div>
+                            </div>
+                        </div>
+
+                        <!-- Stepper Progress Bar (Page 4) -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 py-2">
+                            ${steps.map((step, idx) => {
+                                const isDone = idx <= currentStepIdx;
+                                const isCurrent = idx === currentStepIdx;
+                                const circleBg = isDone ? 'bg-ocean-600 text-white shadow-md shadow-ocean-200' : 'bg-slate-100 text-slate-400';
+                                const textFont = isCurrent ? 'font-bold text-ocean-700' : isDone ? 'font-semibold text-slate-700' : 'text-slate-400';
+
+                                return `
+                                    <div class="flex items-center gap-3 p-3 rounded-2xl ${isCurrent ? 'bg-ocean-50 border border-ocean-200' : ''}">
+                                        <div class="w-10 h-10 rounded-xl ${circleBg} flex items-center justify-center text-base shrink-0">
+                                            <i class="fa-solid ${step.icon}"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-[10px] text-slate-400 uppercase">ขั้นตอนที่ ${idx + 1}</div>
+                                            <div class="text-xs ${textFont}">${step.title}</div>
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <!-- Order Summary Items (Page 4) -->
+                        <div class="bg-slate-50 p-4 rounded-2xl text-xs space-y-2">
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="font-bold text-slate-700">รายการที่สั่ง:</span>
+                                ${order.note ? `<span class="text-[11px] text-amber-700 bg-amber-100 px-2 py-0.5 rounded">หมายเหตุ: ${order.note}</span>` : ''}
+                            </div>
+                            ${order.items.map(i => `
+                                <div class="flex justify-between text-slate-600">
+                                    <span>${i.name} x ${i.qty}</span>
+                                    <span class="font-semibold">฿${i.price * i.qty}</span>
+                                </div>
+                            `).join('')}
+                            <div class="border-t border-slate-200 pt-2 mt-2 flex justify-between font-bold text-sm text-slate-800">
+                                <span>ยอดรวมเงินสดที่ต้องชำระหน้าร้าน:</span>
+                                <span class="text-ocean-600 font-extrabold text-base">฿${order.totalPrice}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // ========================================================
+        // 4. MERCHANT (OPERATOR) DASHBOARD (Page 5)
+        // ========================================================
+        function renderMerchantDashboard() {
+            const shopName = state.currentUser?.shopName || 'Ocean Bites (โอเชี่ยน ไบท์ส)';
+            document.getElementById('merchant-shop-title').textContent = shopName;
+
+            const todaySales = state.orders.reduce((sum, o) => sum + o.totalPrice, 0);
+            const pendingCount = state.orders.filter(o => o.status === 'PENDING' || o.status === 'COOKING').length;
+            const completedCount = state.orders.filter(o => o.status === 'COMPLETED').length;
+
+            document.getElementById('merchant-stat-sales').textContent = `฿${todaySales}`;
+            document.getElementById('merchant-stat-pending').textContent = pendingCount;
+            document.getElementById('merchant-stat-completed').textContent = completedCount;
+            document.getElementById('merchant-stat-menus').textContent = state.menus.length;
+
+            // Orders Table
+            const tbody = document.getElementById('merchant-orders-tbody');
+            if (state.orders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="p-6 text-center text-slate-400">ยังไม่มีรายการออเดอร์ในขณะนี้</td></tr>`;
+            } else {
+                tbody.innerHTML = state.orders.map(o => `
+                    <tr class="hover:bg-slate-50">
+                        <td class="p-4 font-bold text-ocean-600">#${o.id}</td>
+                        <td class="p-4">
+                            <div class="font-semibold text-slate-800">${o.customerName}</div>
+                            <div class="text-xs text-slate-400">${o.customerPhone}</div>
+                        </td>
+                        <td class="p-4 text-xs">${o.items.map(i => `${i.name} (${i.qty})`).join(', ')}</td>
+                        <td class="p-4 font-bold text-amber-600">${o.pickupTime}</td>
+                        <td class="p-4 font-extrabold text-slate-800">฿${o.totalPrice}</td>
+                        <td class="p-4">
+                            <span class="px-2.5 py-1 text-[11px] font-bold rounded-md ${o.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' : o.status === 'READY' ? 'bg-purple-100 text-purple-700' : 'bg-amber-100 text-amber-700'}">
+                                ${o.status === 'PENDING' ? 'รอรับออเดอร์' : o.status === 'COOKING' ? 'กำลังปรุง' : o.status === 'READY' ? 'พร้อมรับ' : 'เสร็จสิ้น'}
+                            </span>
+                        </td>
+                        <td class="p-4 text-center">
+                            <select onchange="updateOrderStatus('${o.id}', this.value)" class="text-xs border border-slate-200 rounded-lg p-1.5 bg-white focus:ring-2 focus:ring-ocean-500">
+                                <option value="PENDING" ${o.status === 'PENDING' ? 'selected' : ''}>รอรับออเดอร์</option>
+                                <option value="COOKING" ${o.status === 'COOKING' ? 'selected' : ''}>กำลังปรุง</option>
+                                <option value="READY" ${o.status === 'READY' ? 'selected' : ''}>พร้อมรับ</option>
+                                <option value="COMPLETED" ${o.status === 'COMPLETED' ? 'selected' : ''}>เสร็จสิ้น</option>
+                            </select>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+
+            renderMerchantMenuList();
+            setTimeout(initMerchantCharts, 100);
+        }
+
+        function updateOrderStatus(orderId, newStatus) {
+            const order = state.orders.find(o => o.id === orderId);
+            if (order) {
+                order.status = newStatus;
+                showToast(`อัปเดตสถานะออเดอร์ #${orderId} แล้ว`);
+                renderMerchantDashboard();
+                renderOrderTracking();
+            }
+        }
+
+        function renderMerchantMenuList() {
+            const grid = document.getElementById('merchant-menu-grid');
+            grid.innerHTML = state.menus.map(item => `
+                <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <img src="${item.img}" class="w-14 h-14 rounded-xl object-cover" onerror="this.src='https://placehold.co/100x100'">
+                        <div>
+                            <span class="text-[10px] px-2 py-0.5 bg-white border border-slate-200 rounded font-semibold text-slate-500">${item.category}</span>
+                            <h4 class="font-bold text-sm text-slate-800 mt-0.5">${item.name}</h4>
+                            <div class="text-xs text-ocean-600 font-extrabold">฿${item.price} <span class="text-[11px] font-normal text-slate-400">(${item.time} นาที)</span></div>
+                        </div>
+                    </div>
+                    <button onclick="deleteMenu('${item.id}')" class="p-2 text-rose-500 hover:bg-rose-50 rounded-xl text-sm" title="ลบเมนูอาหาร">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function openAddMenuModal() {
+            document.getElementById('modal-menu').classList.remove('hidden');
+        }
+        function closeMenuModal() {
+            document.getElementById('modal-menu').classList.add('hidden');
+        }
+
+        function saveMenuModal() {
+            const name = document.getElementById('menu-form-name').value.trim();
+            const price = parseFloat(document.getElementById('menu-form-price').value);
+            const time = parseInt(document.getElementById('menu-form-time').value) || 15;
+            const category = document.getElementById('menu-form-category').value;
+            const img = document.getElementById('menu-form-img').value || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=500';
+
+            if (!name || !price) {
+                showToast('กรุณากรอกชื่อเมนูและราคาให้ครบถ้วน', 'error');
+                return;
+            }
+
+            state.menus.push({
+                id: 'M-' + Date.now(),
+                shopId: 'S1',
+                shopName: 'Ocean Bites (โอเชี่ยน ไบท์ส)',
+                name,
+                category,
+                price,
+                time,
+                isAvailable: true,
+                img
+            });
+
+            closeMenuModal();
+            renderFoodGrid();
+            renderMerchantDashboard();
+            showToast(`เพิ่มเมนู "${name}" เรียบร้อยแล้ว`, 'success');
+        }
+
+        function deleteMenu(id) {
+            state.menus = state.menus.filter(m => m.id !== id);
+            renderFoodGrid();
+            renderMerchantDashboard();
+            showToast('ลบรายการเมนูแล้ว');
+        }
+
+        function initMerchantCharts() {
+            const ctx1 = document.getElementById('merchantSalesChart')?.getContext('2d');
+            const ctx2 = document.getElementById('merchantTopDishesChart')?.getContext('2d');
+
+            if (opSalesChart) opSalesChart.destroy();
+            if (opTopChart) opTopChart.destroy();
+
+            if (ctx1) {
+                opSalesChart = new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels: ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'],
+                        datasets: [{
+                            label: 'ยอดขาย (บาท)',
+                            data: [350, 890, 2450, 1100, 1800, 950, 285],
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+
+            if (ctx2) {
+                opTopChart = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['ข้าวผัดต้มยำ', 'สเต๊กปลากะพง', 'บลูฮาวาย', 'อื่นๆ'],
+                        datasets: [{
+                            data: [45, 25, 20, 10],
+                            backgroundColor: ['#2563eb', '#3b82f6', '#60a5fa', '#cbd5e1']
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+        }
+
+        // ==============================================
+        // 5. ADMIN (BACKEND) DASHBOARD (Page 6)
+        // ==============================================
+        function renderAdminDashboard() {
+            document.getElementById('admin-stat-merchants').textContent = `${state.merchants.length} ร้าน`;
+
+            const tbody = document.getElementById('admin-merchants-tbody');
+            tbody.innerHTML = state.merchants.map(m => `
+                <tr class="hover:bg-slate-50 text-xs">
+                    <td class="p-4">
+                        <div class="font-bold text-slate-800">${m.shopName}</div>
+                        <div class="text-[11px] text-slate-400">เจ้าของ: ${m.ownerName}</div>
+                    </td>
+                    <td class="p-4"><span class="px-2 py-0.5 bg-slate-100 rounded font-semibold text-slate-600">${m.category}</span></td>
+                    <td class="p-4">
+                        <div>${m.phone}</div>
+                        <div class="text-[10px] text-slate-400">${m.email || 'merch@example.com'}</div>
+                    </td>
+                    <td class="p-4">
+                        <div>${m.location}</div>
+                        <div class="text-[10px] text-ocean-600 font-semibold">${m.hours}</div>
+                    </td>
+                    <td class="p-4">
+                        <div class="font-mono text-[11px]">${m.taxId}</div>
+                        <div class="text-[10px] text-slate-500">${m.bank}</div>
+                    </td>
+                    <td class="p-4">
+                        <span class="px-2.5 py-1 rounded font-bold text-[10px] ${m.status === 'APPROVED' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">
+                            ${m.status === 'APPROVED' ? 'อนุมัติแล้ว' : 'รอตรวจสอบ'}
+                        </span>
+                    </td>
+                    <td class="p-4 text-center">
+                        ${m.status === 'PENDING' ? `
+                            <button onclick="approveMerchant('${m.id}')" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-[11px] shadow-sm">
+                                อนุมัติร้านค้า
+                            </button>
+                        ` : '<span class="text-slate-400"><i class="fa-solid fa-check-double text-emerald-500 mr-1"></i>เรียบร้อย</span>'}
+                    </td>
+                </tr>
+            `).join('');
+
+            setTimeout(initAdminCharts, 100);
+        }
+
+        function approveMerchant(id) {
+            const m = state.merchants.find(x => x.id === id);
+            if (m) {
+                m.status = 'APPROVED';
+                showToast(`อนุมัติร้านค้า "${m.shopName}" เรียบร้อยแล้ว`, 'success');
+                renderAdminDashboard();
+            }
+        }
+
+        function initAdminCharts() {
+            const ctx = document.getElementById('adminGmvChart')?.getContext('2d');
+            if (adminChart) adminChart.destroy();
+
+            if (ctx) {
+                adminChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.'],
+                        datasets: [{
+                            label: 'GMV ยอดขายรวม (บาท)',
+                            data: [12000, 19000, 28000, 35000, 42000, 58000],
+                            backgroundColor: '#2563eb',
+                            borderRadius: 8
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
