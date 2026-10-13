@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@ViewData["Title"] - FoodPreOrder (Ocean Blue Express)</title>
+    <title>@ViewData["Title"] - FoodPreOrder </title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome 6 Icons -->
@@ -58,8 +58,7 @@
                         <i class="fa-solid font-bold fa-utensils text-xl"></i>
                     </div>
                     <div>
-                        <span class="text-xl font-bold bg-gradient-to-r from-ocean-700 to-ocean-500 bg-clip-text text-transparent">FoodPreOrder</span>
-                        <span class="block text-[10px] text-ocean-600 font-semibold tracking-wider uppercase -mt-1">Ocean Blue Express</span>
+                        <span class="text-xl font-bold bg-gradient-to-r from-ocean-700 to-ocean-500 bg-clip-text text-transparent">MBS FoodPreOrder</span>
                     </div>
                 </a>
 
@@ -87,7 +86,7 @@
                     <div>
                         @if (ViewBag.CurrentCustomer != null)
                         {
-                            var cust = (FoodPreOrder.Models.Domain.UserAccount)ViewBag.CurrentCustomer;
+                            var cust = ( FoodPreOrder.Models.Domain.UserAccount)ViewBag.CurrentCustomer;
                             <div class="flex items-center gap-3">
                                 <div class="text-right hidden sm:block">
                                     <div class="font-bold text-xs text-slate-800">@cust.FullName</div>
@@ -145,7 +144,7 @@
     <footer class="bg-white border-t border-slate-200 mt-12 py-6 text-xs text-slate-500">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
             <div>
-                © 2026 <strong>FoodPreOrder (Ocean Blue Express)</strong> - ระบบสั่งอาหารล่วงหน้ารับหน้าร้านและชำระเงินสด
+                © 2026 <strong>FoodPreOrder </strong> - ระบบสั่งอาหารล่วงหน้ารับหน้าร้านและชำระเงินสด
             </div>
             <div class="flex items-center space-x-4">
                 <span class="text-slate-400">พอร์ทัลเฉพาะทาง:</span>
